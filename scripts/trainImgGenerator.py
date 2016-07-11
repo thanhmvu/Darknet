@@ -11,7 +11,7 @@ SRC_DIR = '../../../db-deepnet/srcPosters/'
 DST_DIR = '../../../db-deepnet/training/'
 if not os.path.exists(DST_DIR): os.mkdir(DST_DIR)
 
-NUM_OF_IMG = 10 # the total number is 400 ground images
+NUM_OF_IMG = 2 # the total number is 400 ground images
 STD_SIZE = 500 
 
 
@@ -48,7 +48,7 @@ def addOcclusions(img):
 		# Add occlusion
 		cv2.rectangle(img,pt1,pt2,(0,0,0),-1)
 	
-	return img 
+# 	return img 
 
 
 def resize(img, path_out, scale):	
@@ -75,7 +75,11 @@ def rotate(img, path_out, angle, scale):
 		return True
 
 	
-""" This method generates training images from the ground images using perspective transformation """
+""" This method generates training images from the ground images using perspective transformation 
+The input ratios r1-r4 are used to generate the 4 corners of new image in the following way:
+	top-l-point: (0, h * r1)     , top-r-point: (w, h * r2),
+	bottom-l-pt: (0, h - h * r2) , bottom-r-pt: (w, h - h * r4) 
+"""
 def perspectiveTransform (img, (r1,r2,r3,r4)):
 	if img is None: 
 		print 'ERROR: Input image is None'
@@ -87,17 +91,23 @@ def perspectiveTransform (img, (r1,r2,r3,r4)):
 		src_points = np.float32([ [0,0], [w,0],
 														  [0,h], [w,h] ])
 		# the corresponding new 4 location to transform original points to
-		y1 = int(h*r1) ; y2 = int(h*r2)
-		y3 = int(h*r3) ; y4 = int(h*r4)
+		y1 = 0 + int(h*r1) ; y2 = 0 + int(h*r2)
+		y3 = h - int(h*r3) ; y4 = h - int(h*r4)
 		dst_points = np.float32([ [0,y1], [w,y2],
 											        [0,y3], [w,y4] ])
 		
-		# compute the perspective transform matrix and then apply it
-		M = cv2.getPerspectiveTransform(pts1,pts2)
-		dst = cv2.warpPerspective(img,M,(cols,rows))
+		# compute the transform matrix and apply it
+		M = cv2.getPerspectiveTransform(src_points,dst_points)
+		dst = cv2.warpPerspective(img,M,(w,h))
 		
 		return dst
 	
+def ratiosToStr(tupleR):
+	out = ''
+	for r in tupleR:
+		if r == 0: out +="x"
+		else: out += `int(r*100)`.zfill(2)
+	return out
 	
 """ ======================================== Begining of main code ======================================== """
 cnt = 0
@@ -110,31 +120,33 @@ for i in range (0,NUM_OF_IMG):
 		print 'ERROR: Cannot read' + path_in
 	else:
 		img = sizeStandardize(img,STD_SIZE)
-		img = addOcclusions(img) # TODO: check if return is neccessary
+		addOcclusions(img)
 		
-		path_out = DST_DIR+`cnt`.zfill(6)+'.jpg'
+# 		path_out = DST_DIR+`cnt`.zfill(6)+'.jpg'
 # 		cv2.imwrite(path_out,img)
 # 		cnt += 1
-		print "Created", path_out
+# 		print "Created", path_out
 		
-# 		### Perspective Transformation
+		### Perspective Transformation
+		# generate the ratios of left and right edges
+		PT_RANGE = [x*0.01 for x in range(3,31,27)]
 # 		PT_RANGE = [x*0.01 for x in range(3,31,3)]
-# 		rightRatios = [(r,1,(1-r),1) for r in PT_RANGE]
-# 		leftRatios  = [(1,r,1,(1-r)) for r in PT_RANGE]
-# 		ratios = rightRatios + leftRatios
+		rightRatios = [(r,0,r,0) for r in PT_RANGE]
+		leftRatios  = [(0,r,0,r) for r in PT_RANGE]
+		ratios = rightRatios + leftRatios
 		
-# 		for rs  in ratios:
-# 			imgT = perspectiveTransform (img, rs):
-# 			path_out = DST_DIR+`cnt`.zfill(6)+'.jpg'
-# 			if 
-# 				print 'Created ' + path_out
-# 				cv2.imwrite(path_out,dst)
-# 			else:
-# 				print 'Fail to create' + path_out
-		
-		
-		
-		
+		for rs  in ratios:
+			imgT = perspectiveTransform(img,rs)	
+			if imgT != None:
+				# name format: groundIdx_trans_transType_trainIdx.jpg
+				path_out = DST_DIR + `i`.zfill(3) + '_ptrans_' + ratiosToStr(rs) +'_'+ `cnt`.zfill(6) +'.jpg'
+				cv2.imwrite(path_out,imgT)
+				print 'Created ' + path_out
+			else:
+				print 'Fail to create' + path_out
+			cnt += 1
+
+	
 		
 # 		### Rotation
 # 		for angle  in [-30, -20, -10, 10, 20, 30]:
