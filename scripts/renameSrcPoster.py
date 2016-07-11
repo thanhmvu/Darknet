@@ -1,5 +1,14 @@
 import os
 
+"""
+Reformat the name of images:
+	0.jpg		-> 000.jpg
+	1.jpg 	-> 001.jpg
+	...
+	399.jpg -> 399.jpg
+	
+"""
+
 def rename():
 	SRC = "../../../deepDB/srcPosters/"
 	DST = "../../../deepDB/srcPosters/"
