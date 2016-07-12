@@ -25,7 +25,12 @@ if not os.path.exists(LABELS_DIR): os.mkdir(LABELS_DIR)
 NUM_OF_IMG = 2 # the total number is 400 ground images
 STD_SIZE = 500 
 TITLE_RATIO = 0.2 # is estimated to be the ratio of title's height/ poster's height
+
 PT_RANGE = range(3,31,27) # range(3,31,3)
+RT_RANGE = range(4,41,36) # range(4,41,4)
+SC_RANGE = range(1,22,6) # range(1,22,1)
+# BL_RANGE = range(0,1,1)
+# TL_RANGE = range(0,1,1)
 
 """ This method makes all image to have the same width as a way of standardizing their sizes """
 def sizeStandardize(img,std_width): 
@@ -36,8 +41,8 @@ def sizeStandardize(img,std_width):
   return res
 
 
-""" This method simulate the poster's audience as occlusions
-The number of occlusions generated is random but in the range of [0,10]
+""" This method simulate the poster's audience as occlusions.
+The number of occlusions generated is random but in the range of [0,10].
 The width of all occlusions is the same, which is a third of the poster's standard width (STD_SIZE/3) """
 def addOcclusions(img):
 	h,w = img.shape[:2]
@@ -65,7 +70,7 @@ def addOcclusions(img):
 
 def resize(img, path_out, scale):	
 	if img is None: 
-		print 'ERROR: Cannot read' + path_in
+		print 'ERROR: Input image is None'
 		return False
 	else:
 		height, width = img.shape[:2]
@@ -74,20 +79,9 @@ def resize(img, path_out, scale):
 		cv2.imwrite(path_out,res) # save image
 		return True
 	
-	
-def rotate(img, path_out, angle, scale):
-	if img is None: 
-		print 'ERROR: Cannot read' + path_in
-		return False
-	else:
-		rows,cols = img.shape[:2]
-		M = cv2.getRotationMatrix2D((cols/2,rows/2), angle, scale) # (center,angle,scale)
-		dst = cv2.warpAffine(img,M,(cols,rows))
-		cv2.imwrite(path_out,dst)
-		return True
 
 	
-""" This method generates training images from the ground images using perspective transformation 
+""" This method generates training images from the ground images using perspective transformation.
 The input ratios r1-r4 are used to generate the 4 corners of new image in the following way:
 	top-l-point: (0, h * r1)     , top-r-point: (w, h * r2),
 	bottom-l-pt: (0, h - h * r2) , bottom-r-pt: (w, h - h * r4) 
@@ -126,14 +120,60 @@ def perspectiveTransform (img, (r1,r2,r3,r4)):
 		tBox = (x, y, width, height)
 		
 		return (ptImg,tBox)
-	
+
+""" Help method for perpspectiveTranasform.
+Prints out the tuple of perpspective ratios as string """
 def ratiosToStr(tupleR):
 	out = ''
 	for r in tupleR:
 		if r == 0: out +="x"
 		else: out += `int(r*100)`.zfill(2)
 	return out
+
+
+""" This method generates training images from the ground images using rotation """
+def rotate(img, angle):
+	if img is None: 
+		print 'ERROR: Input image is None'
+		return False
+	else:
+		rows,cols = img.shape[:2]
+		M = cv2.getRotationMatrix2D((cols/2,rows/2), angle, 1) # (center,angle,scale)
+		dst = cv2.warpAffine(img,M,(cols,rows))
+		cv2.imwrite(path_out,dst)
+		return True
 	
+	
+""" Method to save output training data to files.
+	trainData = (trainImg, titleBox)
+	cnt = trainIdx
+	i = groundIdx
+	trans = transformation name (perspective, rotation, ...)
+	transType = transformation info (ratio, angle, ...)
+"""
+def saveData(trainData, cnt, i, trans, transType):
+	# name format: trainIdx_groundIdx_trans_transType.jpg
+	img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_'+ trans +'_'+ transType  +'.jpg'
+	label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
+			
+	if trainData != None:
+		imgT = trainData[0]
+		titleBox = trainData[1]
+
+		## Save the training image
+		cv2.imwrite(img_out,imgT)
+		print 'Created ' + img_out
+
+		## Save the label file
+		f = open(label_out,'w')
+		line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
+		f.write(line)
+		f.close()
+		print 'Created ' + label_out			
+	else:
+		print 'Fail to create' + img_out
+
+
 """ ======================================== Begining of main code ======================================== """
 cnt = 0
 for i in range (0,NUM_OF_IMG):
@@ -147,11 +187,6 @@ for i in range (0,NUM_OF_IMG):
 		img = sizeStandardize(img,STD_SIZE)
 		addOcclusions(img)
 		
-# 		path_out = DST_DIR+`cnt`.zfill(6)+'.jpg'
-# 		cv2.imwrite(path_out,img)
-# 		cnt += 1
-# 		print "Created", path_out
-		
 		### Perspective Transformation
 		# generate the ratios of left and right edges
 		ptRange = [x*0.01 for x in PT_RANGE]
@@ -160,59 +195,75 @@ for i in range (0,NUM_OF_IMG):
 		ratios = rightRatios + leftRatios
 		
 		for rs  in ratios:
-			ptOut = perspectiveTransform(img,rs)	
-			if ptOut != None:
-				imgT = ptOut[0]
-				titleBox = ptOut[1]
-				
-				## Save the training image
-				# name format: groundIdx_trans_transType_trainIdx.jpg
-				img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_ptrans_'+ ratiosToStr(rs)  +'.jpg'
-				cv2.imwrite(img_out,imgT)
-				print 'Created ' + img_out
-				
-				## Save the label file
-				label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
-				f = open(label_out,'w')
-				line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
-				f.write(line)
-				f.close()
-				print 'Created ' + label_out
-				
-			else:
-				print 'Fail to create' + path_out
-				
+			# perform transformation
+			ptOut = perspectiveTransform(img,rs)
+			# save output data
+			transType = ratiosToStr(rs)
+			saveData(ptOut,cnt,i,'ptrans',transType)
+			# increase image index
 			cnt += 1
 
-	
-		
+
 # 		### Rotation
-# 		for angle  in [-30, -20, -10, 10, 20, 30]:
-# 			scale = 1
-# 			# create the directory
-# 			dir = query_path+'rotation_'+`angle`+'/'
-# 			if not os.path.exists(dir): os.mkdir(dir)	
-# 			path_out = dir+`i`+'.jpg'
-# 			# rotate and save new image
-# 			if rotate (img, path_out, angle, scale):
-# 				print 'Created ' + path_out
+# 		posAngles = [x for x in RT_RANGE]
+# 		negAngles = [-x for x in posAngles]
+# 		angles = posAngles + negAngles
+		
+# 		for angle  in angles:
+# 			rtOut = rotate(img,angle)
+# 			# name format: trainIdx_groundIdx_trans_transType.jpg
+# 			img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_rotate_'+ `angle`  +'.jpg'
+				
+# 			if rtOut != None:
+# 				imgT = rtOut[0]
+# 				titleBox = rtOut[1]
+				
+# 				## Save the training image
+# 				cv2.imwrite(img_out,imgT)
+# 				print 'Created ' + img_out
+				
+# 				## Save the label file
+# 				label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
+# 				f = open(label_out,'w')
+# 				line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
+# 				f.write(line)
+# 				f.close()
+# 				print 'Created ' + label_out
+				
 # 			else:
-# 				print 'Fail to create' + path_out
+# 				print 'Fail to create' + img_out
+# 			cnt += 1
+		
 		
 # 		### Scaling
-# 		for scale in [0.2, 0.5, 1.5, 2]:
-# 			# create the directory
-# 			dir = query_path+'scaling_'+`scale`+'/'
-# 			if not os.path.exists(dir): os.mkdir(dir)	
-# 			path_out = dir+`i`+'.jpg'
-
-# 			# resize and save new image
-# 			if resize (img, path_out, scale):
-# 				print 'Created ' + path_out
-# 			else:
-# 				print 'Fail to create' + path_out
+# 		mults = [round(x*0.1,2) for x in SC_RANGE if x != 10] 
+			
+# 		for mult in mults:
+# 			scOut = scale(img,mult)
+# 			# name format: trainIdx_groundIdx_trans_transType.jpg
+# 			img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_scale_'+ `mult`  +'.jpg'
+			
+# 			if scOut != None:
+# 				imgT = scOut[0]
+# 				titleBox = scOut[1]
 				
-# 		### Translation
+# 				## Save the training image
+# 				cv2.imwrite(img_out,imgT)
+# 				print 'Created ' + img_out
+				
+# 				## Save the label file
+# 				label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
+# 				f = open(label_out,'w')
+# 				line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
+# 				f.write(line)
+# 				f.close()
+# 				print 'Created ' + label_out			
+# 			else:
+# 				print 'Fail to create' + img_out
+# 			cnt += 1
 		
 # 		### Blurring
+
+# 		### Translation
+
 
