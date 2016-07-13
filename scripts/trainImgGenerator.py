@@ -115,7 +115,7 @@ def perspectiveTransform (img, (r1,r2,r3,r4)):
 		x = 0.5 # x_center / img_w (since the title's width = the poster's width)
 		y = (minY + maxY)*0.5 / ptImg.shape[0] # y_center / img_h
 		width = 1 # obj_w / img w (since the title's width = the poster's width)
-		height = float(maxY - minY) / ptImg.shape[0] # obj_h / img_h
+		height = float(maxY - minY + 1) / ptImg.shape[0] # obj_h / img_h
 		
 		tBox = (x, y, width, height)
 		
@@ -188,7 +188,6 @@ for i in range (0,NUM_OF_IMG):
 		addOcclusions(img)
 		
 		### Perspective Transformation
-		# generate the ratios of left and right edges
 		ptRange = [x*0.01 for x in PT_RANGE]
 		rightRatios = [(r,0,r,0) for r in ptRange]
 		leftRatios  = [(0,r,0,r) for r in ptRange]
@@ -203,35 +202,17 @@ for i in range (0,NUM_OF_IMG):
 			# increase image index
 			cnt += 1
 
-
 # 		### Rotation
 # 		posAngles = [x for x in RT_RANGE]
 # 		negAngles = [-x for x in posAngles]
 # 		angles = posAngles + negAngles
 		
 # 		for angle  in angles:
+# 			# perform transformation
 # 			rtOut = rotate(img,angle)
-# 			# name format: trainIdx_groundIdx_trans_transType.jpg
-# 			img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_rotate_'+ `angle`  +'.jpg'
-				
-# 			if rtOut != None:
-# 				imgT = rtOut[0]
-# 				titleBox = rtOut[1]
-				
-# 				## Save the training image
-# 				cv2.imwrite(img_out,imgT)
-# 				print 'Created ' + img_out
-				
-# 				## Save the label file
-# 				label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
-# 				f = open(label_out,'w')
-# 				line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
-# 				f.write(line)
-# 				f.close()
-# 				print 'Created ' + label_out
-				
-# 			else:
-# 				print 'Fail to create' + img_out
+# 			# save output data
+# 			saveData(ptOut,cnt,i,'rotate',angle)
+# 			# increase image index
 # 			cnt += 1
 		
 		
