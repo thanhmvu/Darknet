@@ -29,7 +29,7 @@ TITLE_RATIO = 0.2 # is estimated to be the ratio of title's height/ poster's hei
 
 PT_RANGE = range(3,31,27) # range(3,31,3)
 RT_RANGE = range(4,41,36) # range(4,41,4)
-# SC_RANGE = range(1,22,6) # range(1,22,1)
+SC_RANGE = range(1,22,6) # range(1,22,1)
 # BL_RANGE = range(0,1,1)
 # TL_RANGE = range(0,1,1)
 
@@ -117,20 +117,6 @@ def saveData(trainData, cnt, i, trans, transType):
 		print 'Created ' + label_out			
 	else:
 		print 'Fail to create' + img_out
-
-		
-
-def resize(img, path_out, scale):	
-	if img is None: 
-		print 'ERROR: Input image is None'
-		return False
-	else:
-		height, width = img.shape[:2]
-		dim = ((int)(scale*width), (int)(scale*height)) # calculate new dimensions
-		res = cv2.resize(img,dim, interpolation = cv2.INTER_LINEAR)
-		cv2.imwrite(path_out,res) # save image
-		return True
-	
 
 	
 """ This method generates training images from the ground images using perspective transformation.
@@ -237,6 +223,25 @@ def rotate(img, angle):
 		return (rtImg,tBox)
 
 
+""" This method generates training images from the ground images by rescaling them 
+scale the poster, not the image. scale down
+
+recalculate the tbox everytime
+"""
+
+
+def scale(img, mult):	
+	if img is None: 
+		print 'ERROR: Input image is None'
+		return None
+	else:
+		h,w = img.shape[:2]
+		dim = ((int)(mult*w), (int)(mult*h)) # calculate new dimensions
+		scImg = cv2.resize(img,dim, interpolation = cv2.INTER_LINEAR)
+		
+		
+		return (scImg,tBox)
+	
 	
 """ ======================================== Begining of main code ======================================== """
 cnt = 0
@@ -266,46 +271,30 @@ for i in range (0,NUM_OF_IMG):
 # 			# increase image index
 # 			cnt += 1
 
-		### Rotation
-		posAngles = [x for x in RT_RANGE]
-		negAngles = [-x for x in posAngles]
-		angles = posAngles + negAngles
+# 		### Rotation
+# 		posAngles = [x for x in RT_RANGE]
+# 		negAngles = [-x for x in posAngles]
+# 		angles = posAngles + negAngles
 		
-		for angle  in angles:
+# 		for angle  in angles:
+# 			# perform transformation
+# 			rtOut = rotate(img,angle)
+# 			# save output data
+# 			saveData(rtOut,cnt,i,'rotate',`angle`)
+# 			# increase image index
+# 			cnt += 1
+		
+		### Scaling
+		mults = [round(x*0.1,2) for x in SC_RANGE if x != 10] 
+			
+		for mult in mults:
 			# perform transformation
-			rtOut = rotate(img,angle)
+			scOut = scale(img,mult)
 			# save output data
-			saveData(rtOut,cnt,i,'rotate',`angle`)
+			saveData(scOut,cnt,i,'scale',`mult`)
 			# increase image index
 			cnt += 1
-		
-		
-# 		### Scaling
-# 		mults = [round(x*0.1,2) for x in SC_RANGE if x != 10] 
 			
-# 		for mult in mults:
-# 			scOut = scale(img,mult)
-# 			# name format: trainIdx_groundIdx_trans_transType.jpg
-# 			img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_scale_'+ `mult`  +'.jpg'
-			
-# 			if scOut != None:
-# 				imgT = scOut[0]
-# 				titleBox = scOut[1]
-				
-# 				## Save the training image
-# 				cv2.imwrite(img_out,imgT)
-# 				print 'Created ' + img_out
-				
-# 				## Save the label file
-# 				label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
-# 				f = open(label_out,'w')
-# 				line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
-# 				f.write(line)
-# 				f.close()
-# 				print 'Created ' + label_out			
-# 			else:
-# 				print 'Fail to create' + img_out
-# 			cnt += 1
 		
 # 		### Blurring
 

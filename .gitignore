@@ -1,4 +1,6 @@
 *.pyc
+scripts/training/labels
+scripts/training/images
 
 *.o
 *.dSYM

@@ -10,3 +10,5 @@ Where x, y, width, and height are relative to the image's width and height, with
     y = y_center / img_h
     with = obj_w / img w
     height = obj_h / img_h
+
+<objectClass> <xCenter/imgW> <yCenter/imgH> <objW/imgW> <objH/imgH>
