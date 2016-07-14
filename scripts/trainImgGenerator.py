@@ -33,6 +33,26 @@ RT_RANGE = range(4,41,36) # range(4,41,4)
 # BL_RANGE = range(0,1,1)
 # TL_RANGE = range(0,1,1)
 
+""" Method to visualize the title box.
+Draws the bounding box of the title and its center onto given image """
+def drawTitleBox(img,tBox):
+	# Extract the coordinates
+	h,w = img.shape[:2]
+	x = int(tBox[0] * w) # x-center of the title box
+	y = int(tBox[1] * h) # y-center
+	wB = int(tBox[2] * w) # the width of the box
+	hB = int(tBox[3] * h) # the height
+	
+	# Calculate the position of top left corner
+	x1 = x - wB/2; x2 = x1 + wB
+	y1 = y - hB/2; y2 = y1 + hB
+	
+	# Draw the box and the center
+	cv2.rectangle(img,(x1,y1), (x2,y2), (0,255,0),3) 
+	cv2.circle(img,(x,y),10,(0,0,255),3)
+	return img
+
+
 """ This method makes all image to have the same width as a way of standardizing their sizes """
 def sizeStandardize(img,std_width): 
   height, width = img.shape[:2]
@@ -151,6 +171,7 @@ def perspectiveTransform (img, (r1,r2,r3,r4)):
 		
 		tBox = (x, y, width, height)
 		
+# 		ptImg = drawTitleBox(ptImg,tBox)
 		return (ptImg,tBox)
 
 """ Help method for perpspectiveTranasform.
@@ -195,21 +216,6 @@ def getTitleBox(c1,c2,c3,c4,imgW,imgH):
 	h = float(hTille) / imgH
 	
 	return (x, y, w, h)
-
-
-def drawTitleBox(img,tBox):
-	h,w = img.shape[:2]
-	x = int(tBox[0] * w)
-	y = int(tBox[1] * h)
-	wB = int(tBox[2] * w)
-	hB = int(tBox[3] * h)
-	
-	x1 = x - wB/2; x2 = x1 + wB
-	y1 = y - hB/2; y2 = y1 + hB
-	
-	cv2.rectangle(img,(x1,y1), (x2,y2), (0,255,0),3) 
-	cv2.circle(img,(x,y),10,(0,0,255),3)
-	return img
 
 
 """ This method generates training images from the ground images using rotation """
