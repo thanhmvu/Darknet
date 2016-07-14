@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import os
 import random
+import imgRotation as rot
 
 """ ============================================================================================================
 This script generates a set of images for training darknet from the ground database of 400 posters.
@@ -27,8 +28,8 @@ STD_SIZE = 500
 TITLE_RATIO = 0.2 # is estimated to be the ratio of title's height/ poster's height
 
 PT_RANGE = range(3,31,27) # range(3,31,3)
-RT_RANGE = range(4,41,36) # range(4,41,4)
-SC_RANGE = range(1,22,6) # range(1,22,1)
+RT_RANGE = range(4,41,40) # range(4,41,4)
+# SC_RANGE = range(1,22,6) # range(1,22,1)
 # BL_RANGE = range(0,1,1)
 # TL_RANGE = range(0,1,1)
 
@@ -66,7 +67,38 @@ def addOcclusions(img):
 		cv2.rectangle(img,pt1,pt2,(0,0,0),-1)
 	
 # 	return img 
+	
+	
+""" Method to save output training data to files.
+	trainData = (trainImg, titleBox)
+	cnt = trainIdx
+	i = groundIdx
+	trans = transformation name (perspective, rotation, ...)
+	transType = transformation info (ratio, angle, ...)
+"""
+def saveData(trainData, cnt, i, trans, transType):
+	# name format: trainIdx_groundIdx_trans_transType.jpg
+	img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_'+ trans +'_'+ transType  +'.jpg'
+	label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
+			
+	if trainData != None:
+		imgT = trainData[0]
+		titleBox = trainData[1]
 
+		## Save the training image
+		cv2.imwrite(img_out,imgT)
+		print 'Created ' + img_out
+
+		## Save the label file
+		f = open(label_out,'w')
+		line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
+		f.write(line)
+		f.close()
+		print 'Created ' + label_out			
+	else:
+		print 'Fail to create' + img_out
+
+		
 
 def resize(img, path_out, scale):	
 	if img is None: 
@@ -135,44 +167,18 @@ def ratiosToStr(tupleR):
 def rotate(img, angle):
 	if img is None: 
 		print 'ERROR: Input image is None'
-		return False
+		return None
 	else:
-		rows,cols = img.shape[:2]
-		M = cv2.getRotationMatrix2D((cols/2,rows/2), angle, 1) # (center,angle,scale)
-		dst = cv2.warpAffine(img,M,(cols,rows))
-		cv2.imwrite(path_out,dst)
-		return True
-	
-	
-""" Method to save output training data to files.
-	trainData = (trainImg, titleBox)
-	cnt = trainIdx
-	i = groundIdx
-	trans = transformation name (perspective, rotation, ...)
-	transType = transformation info (ratio, angle, ...)
-"""
-def saveData(trainData, cnt, i, trans, transType):
-	# name format: trainIdx_groundIdx_trans_transType.jpg
-	img_out = DST_DIR + `cnt`.zfill(6) +'_'+ `i`.zfill(3) +'_'+ trans +'_'+ transType  +'.jpg'
-	label_out = LABELS_DIR + `cnt`.zfill(6) +'.txt'
-			
-	if trainData != None:
-		imgT = trainData[0]
-		titleBox = trainData[1]
-
-		## Save the training image
-		cv2.imwrite(img_out,imgT)
-		print 'Created ' + img_out
-
-		## Save the label file
-		f = open(label_out,'w')
-		line = `i` + ' ' + `titleBox`.strip('()').replace(',','')
-		f.write(line)
-		f.close()
-		print 'Created ' + label_out			
-	else:
-		print 'Fail to create' + img_out
-
+# 		rows,cols = img.shape[:2]
+# 		M = cv2.getRotationMatrix2D((cols/2,rows/2), angle, 1) # (center,angle,scale)
+# 		dst = cv2.warpAffine(img,M,(cols,rows))
+		crop = False
+		rtImg = rot.rotate(img,angle,crop)
+		
+		# compute the title box for training detection
+		tBox = (0,0,0,0)
+		
+		return (rtImg,tBox)
 
 """ ======================================== Begining of main code ======================================== """
 cnt = 0
@@ -187,33 +193,33 @@ for i in range (0,NUM_OF_IMG):
 		img = sizeStandardize(img,STD_SIZE)
 		addOcclusions(img)
 		
-		### Perspective Transformation
-		ptRange = [x*0.01 for x in PT_RANGE]
-		rightRatios = [(r,0,r,0) for r in ptRange]
-		leftRatios  = [(0,r,0,r) for r in ptRange]
-		ratios = rightRatios + leftRatios
+# 		### Perspective Transformation
+# 		ptRange = [x*0.01 for x in PT_RANGE]
+# 		rightRatios = [(r,0,r,0) for r in ptRange]
+# 		leftRatios  = [(0,r,0,r) for r in ptRange]
+# 		ratios = rightRatios + leftRatios
 		
-		for rs  in ratios:
-			# perform transformation
-			ptOut = perspectiveTransform(img,rs)
-			# save output data
-			transType = ratiosToStr(rs)
-			saveData(ptOut,cnt,i,'ptrans',transType)
-			# increase image index
-			cnt += 1
-
-# 		### Rotation
-# 		posAngles = [x for x in RT_RANGE]
-# 		negAngles = [-x for x in posAngles]
-# 		angles = posAngles + negAngles
-		
-# 		for angle  in angles:
+# 		for rs  in ratios:
 # 			# perform transformation
-# 			rtOut = rotate(img,angle)
+# 			ptOut = perspectiveTransform(img,rs)
 # 			# save output data
-# 			saveData(ptOut,cnt,i,'rotate',angle)
+# 			transType = ratiosToStr(rs)
+# 			saveData(ptOut,cnt,i,'ptrans',transType)
 # 			# increase image index
 # 			cnt += 1
+
+		### Rotation
+		posAngles = [x for x in RT_RANGE]
+		negAngles = [-x for x in posAngles]
+		angles = posAngles + negAngles
+		
+		for angle  in angles:
+			# perform transformation
+			rtOut = rotate(img,angle)
+			# save output data
+			saveData(rtOut,cnt,i,'rotate',`angle`)
+			# increase image index
+			cnt += 1
 		
 		
 # 		### Scaling
