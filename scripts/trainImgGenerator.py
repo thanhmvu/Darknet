@@ -28,7 +28,7 @@ STD_SIZE = 500
 TITLE_RATIO = 0.2 # is estimated to be the ratio of title's height/ poster's height
 
 PT_RANGE = range(3,31,27) # range(3,31,3)
-RT_RANGE = range(4,41,40) # range(4,41,4)
+RT_RANGE = range(4,41,18) # range(4,41,4)
 # SC_RANGE = range(1,22,6) # range(1,22,1)
 # BL_RANGE = range(0,1,1)
 # TL_RANGE = range(0,1,1)
@@ -163,23 +163,60 @@ def ratiosToStr(tupleR):
 	return out
 
 
+""" 
+The corners of the title:
+    TopLeft: 1, TopRight: 2
+    BottomL: 3, BottomR:  4
+Input c1 - c4 are the 4 corners of the poster image
+imgW, imgH are the dimensions of that poster
+"""
+def getTitleBox(c1,c2,c3,c4,imgW,imgH):
+	# Get the title corners
+	tc1 = c1 ; tc2 = c2
+	tc3 = tuple(c1[i] + int((c3[i] - c1[i]) * TITLE_RATIO) for i in [0,1])
+	tc4 = tuple(c2[i] + int((c4[i] - c2[i]) * TITLE_RATIO) for i in [0,1])
+	
+	# Get bounding box
+	minX = min(tc1[0], tc2[0], tc3[0], tc4[0])
+	maxX = max(tc1[0], tc2[0], tc3[0], tc4[0])
+	minY = min(tc1[1], tc2[1], tc3[1], tc4[1])
+	maxY = max(tc1[1], tc2[1], tc3[1], tc4[1])
+  
+	# Calculate width, height, and center's coordinates
+	wTitle = maxY - minY + 1
+	hTille = maxX - minX + 1
+	xCenter = (maxX + minX) /2
+	yCenter = (maxY + minY) /2
+	
+	# Return the tile box's values relative to the containing image's dimensions
+	x = float(xCenter) / imgW
+	y = float(yCenter) / imgH
+	w = float(wTitle) / imgW
+	h = float(hTille) / imgH
+	
+	return (x, y, w, h)
+
+
 """ This method generates training images from the ground images using rotation """
 def rotate(img, angle):
 	if img is None: 
 		print 'ERROR: Input image is None'
 		return None
 	else:
-# 		rows,cols = img.shape[:2]
-# 		M = cv2.getRotationMatrix2D((cols/2,rows/2), angle, 1) # (center,angle,scale)
-# 		dst = cv2.warpAffine(img,M,(cols,rows))
 		crop = False
-		rtImg = rot.rotate(img,angle,crop)
+		rotOut = rot.rotate(img,angle,crop)
+		rtImg = rotOut[0]
 		
 		# compute the title box for training detection
-		tBox = (0,0,0,0)
+		c = rotOut[1] # 4 corners of rotated poster
+		h,w = rtImg.shape[:2]
+		tBox = getTitleBox(c[0],c[1],c[2],c[3],w,h)
 		
 		return (rtImg,tBox)
 
+
+	
+	
 """ ======================================== Begining of main code ======================================== """
 cnt = 0
 for i in range (0,NUM_OF_IMG):

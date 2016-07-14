@@ -97,21 +97,20 @@ def rotate(img, angle, crop):
     M = cv2.getRotationMatrix2D((wC/2,hC/2), angle, 1) # (center(x,y),angle,scale)
     rtImg = cv2.warpAffine(imgC,M,(wC,hC))
     
+    # get the coordinates of 4 corners to calculate bounding box
     relativeCorners = getVertices(h,w, math.radians(angle))
     center = (wC/2,hC/2)
     realCorners = [(corner[0]+center[0] , corner[1]+center[1]) for corner in relativeCorners]
-#     print realCorners
-#     print relativeCorners
-    
     box = surroundingBox(realCorners[0], realCorners[1], realCorners[2], realCorners[3])
-    
-#     cv2.rectangle(rtImg,(box[0],box[2]), (box[1],box[3]), (0,255,0),3) 
-#     for vertex in realCorners:
-#         cv2.circle(rtImg, vertex, 20, (0, 255, 0),5)   
     
     # crop the redundant canvas
     rtImg = rtImg[box[2]:box[3],box[0]:box[1]]
-    return rtImg
+    
+    # calculate final coordinates of 4 corners
+    center = (rtImg.shape[1]/2,rtImg.shape[0]/2)
+    realCorners = [(corner[0]+center[0] , corner[1]+center[1]) for corner in relativeCorners]
+    
+    return (rtImg,realCorners)
 
 
 # # ======================================= Main =======================================
