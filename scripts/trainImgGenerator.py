@@ -28,7 +28,7 @@ STD_SIZE = 500
 TITLE_RATIO = 0.2 # is estimated to be the ratio of title's height/ poster's height
 
 PT_RANGE = range(3,31,27) # range(3,31,3)
-RT_RANGE = range(4,41,18) # range(4,41,4)
+RT_RANGE = range(4,41,36) # range(4,41,4)
 # SC_RANGE = range(1,22,6) # range(1,22,1)
 # BL_RANGE = range(0,1,1)
 # TL_RANGE = range(0,1,1)
@@ -183,8 +183,8 @@ def getTitleBox(c1,c2,c3,c4,imgW,imgH):
 	maxY = max(tc1[1], tc2[1], tc3[1], tc4[1])
   
 	# Calculate width, height, and center's coordinates
-	wTitle = maxY - minY + 1
-	hTille = maxX - minX + 1
+	wTitle = maxX - minX + 1
+	hTille = maxY - minY + 1
 	xCenter = (maxX + minX) /2
 	yCenter = (maxY + minY) /2
 	
@@ -195,6 +195,21 @@ def getTitleBox(c1,c2,c3,c4,imgW,imgH):
 	h = float(hTille) / imgH
 	
 	return (x, y, w, h)
+
+
+def drawTitleBox(img,tBox):
+	h,w = img.shape[:2]
+	x = int(tBox[0] * w)
+	y = int(tBox[1] * h)
+	wB = int(tBox[2] * w)
+	hB = int(tBox[3] * h)
+	
+	x1 = x - wB/2; x2 = x1 + wB
+	y1 = y - hB/2; y2 = y1 + hB
+	
+	cv2.rectangle(img,(x1,y1), (x2,y2), (0,255,0),3) 
+	cv2.circle(img,(x,y),10,(0,0,255),3)
+	return img
 
 
 """ This method generates training images from the ground images using rotation """
@@ -212,10 +227,10 @@ def rotate(img, angle):
 		h,w = rtImg.shape[:2]
 		tBox = getTitleBox(c[0],c[1],c[2],c[3],w,h)
 		
+# 		rtImg = drawTitleBox(rtImg,tBox)
 		return (rtImg,tBox)
 
 
-	
 	
 """ ======================================== Begining of main code ======================================== """
 cnt = 0
