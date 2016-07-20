@@ -6,7 +6,7 @@ import os
 import config as CFG
 # import imgRotation as rot
 import utils
-import transformation as trans
+# import transformation as trans
 
 """ ============================================================================================================
 This script generates a set of images for training darknet from the ground database of 400 posters.
