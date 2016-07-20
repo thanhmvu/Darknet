@@ -25,22 +25,25 @@ Where x, y, width, and height are relative to the image's width and height, with
 def transform(img):
   # standardize the size of imput image
 	imgT = utils.resize(img, CFG.STD_SIZE)
-  
 	imgT = trans.addOcclusions(imgT)
-	tBox = (0,0,0,0)
-# 	imgT, tBox = trans.perspectiveTransform(imgT)
-# 	imgT, tBox = trans.rotate(imgT,tBox)
-# 	imgT, tBox = trans.scale(imgT,tBox)
-# 	imgT = trans.blur(imgT)
-# 	imgT, tBox = trans.translate(imgT,tBox)
+	h,w = imgT.shape[:2]
+	r = CFG.TITLE_RATIO
+	title = [(0,0), (w-1,0), (w-1,int(h*r)), (0,int(h*r))]
 	
-	return (imgT, tBox)
+	imgT, title = trans.perspective(imgT, title)
+# 	imgT, title = trans.rotate(imgT,title)
+# 	imgT, title = trans.scale(imgT,title)
+# 	imgT, title = trans.blur(imgT, title)
+# 	imgT, title = trans.translate(imgT,title)
+	
+	return (imgT, title)
 	
 	
-""" Method to save output training data to files.
-	trainData = (trainImg, titleBox)
-"""
+
 def saveData(trainData, imgIdx, objIdx):
+	""" Method to save output training data to files.
+	trainData = (trainImg, titleBox)
+	"""
 	# name format: trainIdx_groundIdx_trans_transType.jpg
 	img_out = CFG.DST_DIR + `imgIdx`.zfill(6) +'_'+ `objIdx`.zfill(3) +'.jpg'
 	label_out = CFG.LABELS_DIR + `imgIdx`.zfill(6) +'.txt'
@@ -71,7 +74,7 @@ if not os.path.exists(CFG.LABELS_DIR): os.mkdir(CFG.LABELS_DIR)
 imgIdx = 0
 # Loop through all ground images
 for objIdx in range (0, CFG.LIB_SIZE):
-	# read the image from the source folder
+	# read an image from the source folder
 	path_in = CFG.SRC_DIR + `objIdx`.zfill(3) + '.jpg'
 	img = cv2.imread(path_in)
 	
