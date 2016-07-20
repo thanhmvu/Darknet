@@ -2,10 +2,11 @@ import config as CFG
 import cv2
 import random
 
-""" This method simulate the poster's audience as occlusions.
-The number of occlusions generated is random but in the range of [0,10].
-The width of all occlusions is the same, which is a forth of the poster's standard width (STD_SIZE/3) """
 def addOcclusions(img):
+	""" This method simulate the poster's audience as occlusions.
+	The number of occlusions generated is random but in the range of [n1,n2].
+	The width of all occlusions is the same, which is a forth of the poster's standard width (STD_SIZE/3) 
+	"""
 	occWidth = CFG.OCC_W
 	n1,n2 = CFG.OCC_NUM
 	numOfOcc = random.randint(n1,n2)
@@ -14,7 +15,7 @@ def addOcclusions(img):
 	# (x-start, x-end, x-step). same for ys 
 	# The step is to make sure the occlusions are spaced out reasonably
 	xs = (0, w-1, occWidth/4) 
-	ys = (int(h* CFG.TITLE_RATIO), int(h*0.5), int(h*0.1)) 
+	ys = (int(h* CFG.TITLE_RATIO), int(h*0.5), int(h*0.05)) 
 	
 	# Generate occlusions
 	for it in range(0,numOfOcc):
@@ -25,52 +26,51 @@ def addOcclusions(img):
 		# Calculate end point
 		pt2 = (x1 + occWidth, h-1)
 		# Add occlusion
-		cv2.rectangle(img,pt1,pt2,(0,0,0),-1)
+		cv2.rectangle(img,pt1,pt2,(150,150,150),-1)
 	
 	return img 
 
+def perspective (img, title):
+	""" This method transforms a given poster using perspective transformation.
+	@return (ptImg, title) - new image, new location of the title
+	@param img - the poster to be transformed
+	@param title - the original location of the poster's title, given by the coordinates of 4 corners: [topLeft, topRight, bottomLeft, bottomRight]
 	
-""" This method generates training images from the ground images using perspective transformation.
-An assumption is that the input poster is a rectangle
-The input ratios r1-r4 are used to generate the 4 corners of new image in the following way:
-	top-l-point: (0, h * r1)     , top-r-point: (w, h * r2),
-	bottom-l-pt: (0, h - h * r2) , bottom-r-pt: (w, h - h * r4) 
-"""
-def perspectiveTransform (img, (r1,r2,r3,r4)):
-	if img is None: 
-		print 'ERROR: Input image is None'
-		return None
-	else:
-		h,w = img.shape[:2]
+	"""
+# 	PT_RANGE = range(3,31,27) # range(3,31,3)
+# 	ptRange = [x*0.01 for x in PT_RANGE]
+# 	rightRatios = [(r,0,r,0) for r in ptRange]
+# 	leftRatios  = [(0,r,0,r) for r in ptRange]
+# 	ratios = rightRatios + leftRatios
+	
+	h,w = img.shape[:2]
+	title = [pt1,pt2,pt3,p4]
 
-		# the original 4 points (corners) of the image to transform
-		src_points = np.float32([ [0,0], [w,0],
-		                          [0,h], [w,h] ])
-		# the corresponding new 4 location to transform original points to
-		y1 = 0 + int(h*r1) ; y2 = 0 + int(h*r2)
-		y3 = h - int(h*r3) ; y4 = h - int(h*r4)
-		dst_points = np.float32([ [0,y1], [w,y2],
-		                          [0,y3], [w,y4] ])
-		
-		# compute the transform matrix and apply it
-		M = cv2.getPerspectiveTransform(src_points,dst_points)
-		ptImg = cv2.warpPerspective(img,M,(w,h))
-		
-		# compute the title box for training detection
-		minY = min(y1,y2)
-		maxY1 = y1 + int((y3-y1)*TITLE_RATIO)
-		maxY2 = y2 + int((y4-y2)*TITLE_RATIO)
-		maxY = max(maxY1,maxY2) # the lowest corner of the title area
-		
-		x = 0.5 # x_center / img_w (since the title's width = the poster's width)
-		y = (minY + maxY)*0.5 / ptImg.shape[0] # y_center / img_h
-		width = 1 # obj_w / img w (since the title's width = the poster's width)
-		height = float(maxY - minY + 1) / ptImg.shape[0] # obj_h / img_h
-		
-		tBox = (x, y, width, height)
-		
-# 		ptImg = drawTitleBox(ptImg,tBox)
-		return (ptImg,tBox)
+	# the corresponding new 4 location to transform original points to
+	y1 = 0 + int(h*r1) ; y2 = 0 + int(h*r2)
+	y3 = h - int(h*r3) ; y4 = h - int(h*r4)
+	dst_points = np.float32([ [0,y1], [w,y2],
+														[0,y3], [w,y4] ])
+
+	# compute the transform matrix and apply it
+	M = cv2.getPerspectiveTransform(src_points,dst_points)
+	ptImg = cv2.warpPerspective(img,M,(w,h))
+
+	# compute the title box for training detection
+	minY = min(y1,y2)
+	maxY1 = y1 + int((y3-y1)*TITLE_RATIO)
+	maxY2 = y2 + int((y4-y2)*TITLE_RATIO)
+	maxY = max(maxY1,maxY2) # the lowest corner of the title area
+
+	x = 0.5 # x_center / img_w (since the title's width = the poster's width)
+	y = (minY + maxY)*0.5 / ptImg.shape[0] # y_center / img_h
+	width = 1 # obj_w / img w (since the title's width = the poster's width)
+	height = float(maxY - minY + 1) / ptImg.shape[0] # obj_h / img_h
+
+	tBox = (x, y, width, height)
+
+# 	ptImg = drawTitleBox(ptImg,tBox)
+	return (ptImg,tBox)
 
 """ Help method for perpspectiveTranasform.
 Prints out the tuple of perpspective ratios as string """
