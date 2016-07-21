@@ -1,12 +1,12 @@
 import cv2
 import os
-# import numpy as np
+import numpy as np
 # import random
 
 import config as CFG
 # import imgRotation as rot
 import utils
-# import transformation as trans
+import posterTrans as pTr
 
 """ ============================================================================================================
 This script generates a set of images for training darknet from the ground database of 400 posters.
@@ -25,18 +25,21 @@ Where x, y, width, and height are relative to the image's width and height, with
 def transform(img):
   # standardize the size of imput image
 	imgT = utils.resize(img, CFG.STD_SIZE)
-	imgT = trans.addOcclusions(imgT)
+	imgT = pTr.addOcclusions(imgT)
 	h,w = imgT.shape[:2]
 	r = CFG.TITLE_RATIO
 	title = [(0,0), (w-1,0), (w-1,int(h*r)), (0,int(h*r))]
 	
-	imgT, title = trans.perspective(imgT, title)
-# 	imgT, title = trans.rotate(imgT,title)
-# 	imgT, title = trans.scale(imgT,title)
-# 	imgT, title = trans.blur(imgT, title)
-# 	imgT, title = trans.translate(imgT,title)
+	imgT, title = pTr.perspective(imgT, title)
+# 	imgT, title = pTr.rotate(imgT,title)
+# 	imgT, title = pTr.scale(imgT,title)
+# 	imgT, title = pTr.blur(imgT, title)
+# 	imgT, title = pTr.translate(imgT,title)
 	
-	return (imgT, title)
+	titleArea = utils.boundingArea(title)
+	tBox = utils.formatLabel(titleArea, imgT.shape[:2])
+	
+	return (imgT, tBox)
 	
 	
 
@@ -53,6 +56,7 @@ def saveData(trainData, imgIdx, objIdx):
 		titleBox = trainData[1]
 
 		## Save the training image
+		imgT = utils.drawTitleBox(imgT,titleBox)
 		cv2.imwrite(img_out,imgT)
 		print 'Created ' + img_out
 
@@ -61,7 +65,7 @@ def saveData(trainData, imgIdx, objIdx):
 		line = `objIdx` + ' ' + `titleBox`.strip('()').replace(',','')
 		f.write(line)
 		f.close()
-		print 'Created ' + label_out			
+		print 'Created ' + label_out
 	else:
 		print 'Fail to create' + img_out
 

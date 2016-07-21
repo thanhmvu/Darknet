@@ -1,11 +1,16 @@
 import config as CFG
 import cv2
 import random
+import imgTrans as iTr
+import math
+import numpy as np
+# import utils
 
 def addOcclusions(img):
 	""" This method simulate the poster's audience as occlusions.
 	The number of occlusions generated is random but in the range of [n1,n2].
 	The width of all occlusions is the same, which is a forth of the poster's standard width (STD_SIZE/3) 
+	
 	"""
 	occWidth = CFG.OCC_W
 	n1,n2 = CFG.OCC_NUM
@@ -30,128 +35,146 @@ def addOcclusions(img):
 	
 	return img 
 
-def perspective (img, title):
-	""" This method transforms a given poster using perspective transformation.
-	@return (ptImg, title) - new image, new location of the title
-	@param img - the poster to be transformed
-	@param title - the original location of the poster's title, given by the coordinates of 4 corners: [topLeft, topRight, bottomLeft, bottomRight]
+""" ======================================== Perspective ======================================== """
+
+def localCoords(P):
+	""" Adopted and modified from http://stackoverflow.com/questions/26369618/getting-local-2d-coordinates-of-vertices-of-a-planar-polygon-in-3d-space
+	Return the local 2D coordinates of each 3D points in set P, given that:
+	- these points are on the same plane in the original 3D coordinate system
+	- the size of P is greater or equal to 3
 	
 	"""
-# 	PT_RANGE = range(3,31,27) # range(3,31,3)
-# 	ptRange = [x*0.01 for x in PT_RANGE]
-# 	rightRatios = [(r,0,r,0) for r in ptRange]
-# 	leftRatios  = [(0,r,0,r) for r in ptRange]
-# 	ratios = rightRatios + leftRatios
+	loc0 = P[0]                      # local origin
+	locy = np.subtract(P[len(P)-1],loc0)  	 # local Y axis
+	normal = np.cross(locy, np.subtract(P[1],loc0)) # a vector orthogonal to polygon plane
+	locx = np.cross(normal, locy)      # local X axis
+
+	# normalize
+	locx /= np.linalg.norm(locx)
+	locy /= np.linalg.norm(locy)
+
+	local_coords = [(np.dot(np.subtract(p,loc0), locx),  # local X coordinate
+	                 np.dot(np.subtract(p,loc0), locy))  # local Y coordinate
+	                for p in P]
 	
+	# Handle cropping issue
+	dx = -min([p[0] for p in local_coords])
+	dy = -min([p[1] for p in local_coords])
+	local_coords = [(p[0]+dx, p[1]+dy) for p in local_coords]
+
+	return local_coords
+
+
+def randViewpoint(C,w,h):
+	""" Method that generates a point for the perpsective plane (the normal of this plane would be toward the center C of the poster)
+	The point is generates randomly within a hardcoded range, relative to C,w,h. The range is illustrated below.
+	
+			      |_poster_|           .      a = 45 degree
+			    / |        | \         |      zRange = (zC + R/2) +-  R/2
+			  / a |        | a \       | R    xRange =     xC     -+ (w/2 + R.sin(a))
+			/     |        |     \     |      yRange = (yC - h/2) +-  h/2
+			\_____|________|_____/     |	
+			       --------
+			          w
+	
+	@param C - the center of the poster
+	@param w - the width of the poster
+	@param h - the height of the poster
+	@return (x,y,z) - the coordinates of the generated point
+	
+	"""
+	(xC,yC,zC) = C # poster's center
+	unit = 1 # estimated to be roughly equivalent to 1/2 -> 1 inch in real world unit
+	R = random.randrange(int(w*0.75), int(w*1.25), unit)
+	
+	# Generate x
+	xStart = xC - w/2 - R/math.sqrt(2)
+	xEnd = xC + w/2 + R/math.sqrt(2)
+	x = random.randrange(int(xStart), int(xEnd), unit)
+	
+	# Generate z
+	dx = abs(xC - x) - w/2
+	dz = math.sqrt(R*R - dx*dx)
+	z = int(zC + dz) if dx > 0 else int(zC + R)
+	
+	# Generate y
+	y = random.randrange(int(yC), int(yC + h), unit)
+	
+	return (x,y,z)
+
+
+def perspective (img, title):
 	h,w = img.shape[:2]
-	title = [pt1,pt2,pt3,p4]
+	[pt1,pt2,pt3,p4] = title
+	C = [w*0.5, h*0.5, 0.0] # poster's center
 
-	# the corresponding new 4 location to transform original points to
-	y1 = 0 + int(h*r1) ; y2 = 0 + int(h*r2)
-	y3 = h - int(h*r3) ; y4 = h - int(h*r4)
-	dst_points = np.float32([ [0,y1], [w,y2],
-														[0,y3], [w,y4] ])
-
-	# compute the transform matrix and apply it
-	M = cv2.getPerspectiveTransform(src_points,dst_points)
-	ptImg = cv2.warpPerspective(img,M,(w,h))
-
-	# compute the title box for training detection
-	minY = min(y1,y2)
-	maxY1 = y1 + int((y3-y1)*TITLE_RATIO)
-	maxY2 = y2 + int((y4-y2)*TITLE_RATIO)
-	maxY = max(maxY1,maxY2) # the lowest corner of the title area
-
-	x = 0.5 # x_center / img_w (since the title's width = the poster's width)
-	y = (minY + maxY)*0.5 / ptImg.shape[0] # y_center / img_h
-	width = 1 # obj_w / img w (since the title's width = the poster's width)
-	height = float(maxY - minY + 1) / ptImg.shape[0] # obj_h / img_h
-
-	tBox = (x, y, width, height)
-
-# 	ptImg = drawTitleBox(ptImg,tBox)
-	return (ptImg,tBox)
-
-""" Help method for perpspectiveTranasform.
-Prints out the tuple of perpspective ratios as string """
-def ratiosToStr(tupleR):
-	out = ''
-	for r in tupleR:
-		if r == 0: out +="x"
-		else: out += `int(r*100)`.zfill(2)
-	return out
-
-
-""" 
-The corners of the title:
-    TopLeft: 1, TopRight: 2
-    BottomL: 3, BottomR:  4
-Input c1 - c4 are the 4 corners of the poster image
-imgW, imgH are the dimensions of that poster
-"""
-def getTitleBox(c1,c2,c3,c4,imgW,imgH):
-	# Get the title corners
-	tc1 = c1 ; tc2 = c2
-	tc3 = tuple(c1[i] + int((c3[i] - c1[i]) * TITLE_RATIO) for i in [0,1])
-	tc4 = tuple(c2[i] + int((c4[i] - c2[i]) * TITLE_RATIO) for i in [0,1])
+	# Generate image plane 
+	P = randViewpoint(C,w,h) # plane origin
+	normal = np.subtract(C,P) # plane normal
+	# Specify the viewpoint
+	V = np.subtract(P, normal*4)
 	
-	# Get bounding box
-	minX = min(tc1[0], tc2[0], tc3[0], tc4[0])
-	maxX = max(tc1[0], tc2[0], tc3[0], tc4[0])
-	minY = min(tc1[1], tc2[1], tc3[1], tc4[1])
-	maxY = max(tc1[1], tc2[1], tc3[1], tc4[1])
-  
-	# Calculate width, height, and center's coordinates
-	wTitle = maxX - minX + 1
-	hTille = maxY - minY + 1
-	xCenter = (maxX + minX) /2
-	yCenter = (maxY + minY) /2
-	
-	# Return the tile box's values relative to the containing image's dimensions
-	x = float(xCenter) / imgW
-	y = float(yCenter) / imgH
-	w = float(wTitle) / imgW
-	h = float(hTille) / imgH
-	
-	return (x, y, w, h)
+	M1 = iTr.projection_matrix(P, normal, None, V) # 4x4 matrix
+
+	# Convert to 3x3 2D matrix
+	dstPts3D = []
+	for pt in title:
+		homoPt = np.array([[pt[0]], [pt[1]], [0], [1]])
+		out = np.dot(M1,homoPt)
+		dstPt = [out[0][0]/out[3][0],out[1][0]/out[3][0],out[2][0]/out[3][0]]
+		dstPts3D.append(dstPt)
+
+	# Convert 3D coords to 2D coords
+	dstPts2D = np.float32(localCoords(dstPts3D))
+	srcPts2D = np.float32(title)
+
+	# get 3x3 pespsective matrix
+	M2 = cv2.getPerspectiveTransform(srcPts2D, dstPts2D)
+
+	# Transform
+	ptImg = cv2.warpPerspective(img,M2,(w,h))
+	title = dstPts2D.astype(int)
+
+	return (ptImg,title)
 
 
-""" This method generates training images from the ground images using rotation """
-def rotate(img, angle):
-	if img is None: 
-		print 'ERROR: Input image is None'
-		return None
-	else:
-		crop = False
-		rotOut = rot.rotate(img,angle,crop)
-		rtImg = rotOut[0]
+
+# """ This method generates training images from the ground images using rotation """
+# def rotate(img, angle):
+# 	if img is None: 
+# 		print 'ERROR: Input image is None'
+# 		return None
+# 	else:
+# 		crop = False
+# 		rotOut = rot.rotate(img,angle,crop)
+# 		rtImg = rotOut[0]
 		
-		# compute the title box for training detection
-		c = rotOut[1] # 4 corners of rotated poster
-		h,w = rtImg.shape[:2]
-		tBox = getTitleBox(c[0],c[1],c[2],c[3],w,h)
+# 		# compute the title box for training detection
+# 		c = rotOut[1] # 4 corners of rotated poster
+# 		h,w = rtImg.shape[:2]
+# 		tBox = getTitleBox(c[0],c[1],c[2],c[3],w,h)
 		
-# 		rtImg = drawTitleBox(rtImg,tBox)
-		return (rtImg,tBox)
+# # 		rtImg = drawTitleBox(rtImg,tBox)
+# 		return (rtImg,tBox)
 
 
-""" This method generates training images from the ground images by rescaling them 
-scale the poster, not the image. scale down
+# """ This method generates training images from the ground images by rescaling them 
+# scale the poster, not the image. scale down
 
-recalculate the tbox everytime
-"""
+# recalculate the tbox everytime
+# """
 
 
-def scale(img, mult):	
-	if img is None: 
-		print 'ERROR: Input image is None'
-		return None
-	else:
-		h,w = img.shape[:2]
-		dim = ((int)(mult*w), (int)(mult*h)) # calculate new dimensions
-		scImg = cv2.resize(img,dim, interpolation = cv2.INTER_LINEAR)
+# def scale(img, mult):	
+# 	if img is None: 
+# 		print 'ERROR: Input image is None'
+# 		return None
+# 	else:
+# 		h,w = img.shape[:2]
+# 		dim = ((int)(mult*w), (int)(mult*h)) # calculate new dimensions
+# 		scImg = cv2.resize(img,dim, interpolation = cv2.INTER_LINEAR)
 		
 		
-		return (scImg,tBox)
+# 		return (scImg,tBox)
 	
 	
