@@ -27,3 +27,34 @@ def drawTitleBox(img,tBox):
 	cv2.rectangle(img,(x1,y1), (x2,y2), (0,255,0),3) 
 	cv2.circle(img,(x,y),10,(0,0,255),3)
 	return img
+
+
+def boundingArea(list):
+	""" Methods returns the boundingArea surrounding all given 2D points """
+	minX = min([pt[0] for pt in list])
+	maxX = max([pt[0] for pt in list])
+	minY = min([pt[1] for pt in list])
+	maxY = max([pt[1] for pt in list])
+	return [minX,maxX,minY,maxY]
+
+	
+def formatLabel(titleArea, dim):
+	""" Convert from the bounding area of the poster's title (minX,maxX,minY,maxY) 
+	to print-out label format (<x>, <y>, <width>, <height>) relative to the poster's dimensions
+	
+	@param titleArea - (minX,maxX,minY,maxY) of the area containing the tile
+	@param dim - the dimensions (H,W) of the whole poster
+	@return - (xCenter/imgW), (yCenter/imgH), (objW/imgW), (objH/imgH)
+	
+	"""
+	H,W = dim
+	minX,maxX,minY,maxY = titleArea
+	
+	# Calculate the title's output 
+	x = float(maxX + minX) /2 /W
+	y = float(maxY + minY) /2 /H
+	w = float(maxX - minX + 1) /W
+	h = float(maxY - minY + 1) /H	
+	
+	return (x,y,w,h)
+	
