@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 # Resize the image to have the width of given size 
 # preserve the ratios between 2 side 
@@ -35,7 +36,7 @@ def boundingArea(list):
 	maxX = max([pt[0] for pt in list])
 	minY = min([pt[1] for pt in list])
 	maxY = max([pt[1] for pt in list])
-	return [minX,maxX,minY,maxY]
+	return (minX,maxX,minY,maxY)
 
 	
 def formatLabel(titleArea, dim):
@@ -58,3 +59,10 @@ def formatLabel(titleArea, dim):
 	
 	return (x,y,w,h)
 	
+
+def transform2D(pt, mat):
+	tmp = np.array([[pt[0]],[pt[1]],[1]])
+	ptMat = np.dot(mat, tmp)
+	x = int(ptMat[0][0]/ptMat[2][0])
+	y = int(ptMat[1][0]/ptMat[2][0])
+	return (x,y)

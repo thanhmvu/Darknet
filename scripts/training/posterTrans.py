@@ -4,7 +4,7 @@ import random
 import imgTrans as iTr
 import math
 import numpy as np
-# import utils
+import utils
 
 def addOcclusions(img):
 	""" This method simulate the poster's audience as occlusions.
@@ -103,6 +103,23 @@ def randViewpoint(C,w,h):
 	return (x,y,z)
 
 
+def cropPtImg(ptImg, M):
+	h,w = ptImg.shape[:2]
+	oldCorners = [(0,0), (w-1,0), (w-1,h-1), (0,h-1)]
+	
+	# Calculate new corners
+	newCorners = [utils.transform2D(pt,M) for pt in oldCorners]
+	minX,maxX,minY,maxY = utils.boundingArea(newCorners)
+	
+	# Check if the transformed corners are out of bound
+	x1 = max(minX,0)
+	x2 = min(maxX,w)
+	y1 = max(minY,0)
+	y2 = min(maxY,h)
+	
+	return ptImg[y1:y2,x1:x2]
+
+
 def perspective (img, title):
 	h,w = img.shape[:2]
 	[pt1,pt2,pt3,p4] = title
@@ -133,11 +150,14 @@ def perspective (img, title):
 
 	# Transform
 	ptImg = cv2.warpPerspective(img,M2,(w,h))
+	
+	# Refine the results
 	title = dstPts2D.astype(int)
+	ptImg = cropPtImg(ptImg,M2)
 
 	return (ptImg,title)
 
-
+""" ======================================== Rotation ======================================== """
 
 # """ This method generates training images from the ground images using rotation """
 # def rotate(img, angle):
