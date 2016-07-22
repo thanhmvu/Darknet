@@ -86,7 +86,7 @@ def randViewpoint(C,w,h):
 	"""
 	(xC,yC,zC) = C # poster's center
 	unit = 1 # estimated to be roughly equivalent to 1/2 -> 1 inch in real world unit
-	R = random.randrange(int(w*0.75), int(w*1.25), unit)
+	R = random.randrange(int(w*0.25), int(w*0.75), unit)
 	
 	# Generate x
 	xStart = xC - w/2 - R/math.sqrt(2)
@@ -95,11 +95,10 @@ def randViewpoint(C,w,h):
 	
 	# Generate z
 	dx = abs(xC - x) - w/2
-	dz = math.sqrt(R*R - dx*dx)
-	z = int(zC + dz) if dx > 0 else int(zC + R)
+	z = int(zC + R) if dx < 0 else int(zC + math.sqrt(R*R - dx*dx)) 	
 	
 	# Generate y
-	y = random.randrange(int(yC-h), int(yC), unit)
+	y = random.randrange(int(yC-h/2), int(yC), unit)
 	
 	return (x,y,z)
 
@@ -133,7 +132,8 @@ def perspective (img, title):
 	P = randViewpoint(C,w,h) # plane origin
 	normal = np.subtract(C,P) # plane normal
 	# Hardcoded viewpoint
-	V = np.subtract(P, normal*4)
+	r = random.randint(75,125)*0.01
+	V = np.subtract(P, normal*r)
 	
 	M1 = iTr.projection_matrix(P, normal, None, V) # 4x4 matrix
 
