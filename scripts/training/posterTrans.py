@@ -260,6 +260,12 @@ def scaleAndTranslate(img, title):
 	M = np.float32([[1,0,tx],[0,1,ty]])
 	stImg = cv2.warpAffine(img,M,(w2,h2))
 	title = [transformPoint(pt,M) for pt in title]
+	# refine out-of-bound points
+	for i,pt in enumerate(title):
+		x,y = pt
+		x = min(max(0,x), w2-1)
+		y = min(max(0,y), h2-1)
+		title[i] = (x,y)
 	
 	return (stImg,title)
 	
