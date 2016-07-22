@@ -35,6 +35,7 @@ def addOcclusions(img):
 	
 	return img 
 
+
 """ ======================================== Perspective ======================================== """
 
 def localCoords(P):
@@ -121,6 +122,9 @@ def cropPtImg(ptImg, M):
 
 
 def perspective (img, title):
+	""" This method generates training images from the ground images using perspective transformation.
+	
+	"""
 	h,w = img.shape[:2]
 	[pt1,pt2,pt3,p4] = title
 	C = [w*0.5, h*0.5, 0.0] # poster's center
@@ -157,25 +161,51 @@ def perspective (img, title):
 
 	return (ptImg,title)
 
+
 """ ======================================== Rotation ======================================== """
 
-# """ This method generates training images from the ground images using rotation """
-# def rotate(img, angle):
-# 	if img is None: 
-# 		print 'ERROR: Input image is None'
-# 		return None
-# 	else:
-# 		crop = False
-# 		rotOut = rot.rotate(img,angle,crop)
-# 		rtImg = rotOut[0]
-		
-# 		# compute the title box for training detection
-# 		c = rotOut[1] # 4 corners of rotated poster
-# 		h,w = rtImg.shape[:2]
-# 		tBox = getTitleBox(c[0],c[1],c[2],c[3],w,h)
-		
-# # 		rtImg = drawTitleBox(rtImg,tBox)
-# 		return (rtImg,tBox)
+def rotatePoint(pt, mat):
+	tmp = np.array([[pt[0]],[pt[1]],[1]])
+	ptMat = np.dot(mat, tmp)
+	x = int(ptMat[0][0])
+	y = int(ptMat[1][0])
+	return (x,y)
+
+def rotate(img, title):
+	""" This method generates training images from the ground images using rotation.
+	@param title - list of 4 corners of the title
+	"""
+	angle = random.randint(-30,30)
+	h,w = img.shape[:2]
+	poster = [(0,0), (w-1,0), (w-1,h-1), (0,h-1)] # 4 corners
+	
+	# Copy image onto a bigger background to avoid cropping when being rotated
+	R = max(w,h)*2 
+	imgB = np.zeros((R,R,3), np.uint8) # create a black backgrouund
+	y = R/2-h/2 ; x = R/2-w/2
+	imgB[y: y+h, x: x+w] = img # Copy img onto the background
+	hB,wB = imgB.shape[:2]
+	poster = [(p[0] -w/2 +wB/2, p[1] -h/2 +hB/2) for p in poster]
+	title = [(p[0] -w/2 +wB/2, p[1] -h/2 +hB/2) for p in title] 
+
+	# Calculate the rotation matrix then apply it to the image
+	M = cv2.getRotationMatrix2D((wB/2,hB/2), angle, 1) # (center(x,y),angle,scale)
+	
+	rtImg = cv2.warpAffine(imgB,M,(wB,hB))
+	poster = [rotatePoint(pt,M) for pt in poster]
+	title = [rotatePoint(pt,M) for pt in title]
+	hR,wR = rtImg.shape[:2]
+	
+	# Crop redundant background
+	minX,maxX,minY,maxY = utils.boundingArea(poster)
+	# check if the transformed corners are out of bound
+	x1 = max(minX,0) ; x2 = min(maxX,wR)
+	y1 = max(minY,0) ; y2 = min(maxY,hR)
+	rtImg = rtImg[y1:y2,x1:x2] # crop
+	hC,wC = rtImg.shape[:2]
+	title = [(p[0] -wR/2 +wC/2, p[1] -hR/2 +hC/2) for p in title] 
+	
+	return (rtImg,title)
 
 
 # """ This method generates training images from the ground images by rescaling them 
