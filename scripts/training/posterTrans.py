@@ -232,8 +232,8 @@ def rotate(img, title):
 	
 	return (rtImg,title)
 
-""" ======================================== Scaling ======================================== """
 
+""" ================================== Scaling and Translation ================================== """
 
 def scaleAndTranslate(img, title):	
 	""" This method generates training images from the ground images 
@@ -270,3 +270,17 @@ def scaleAndTranslate(img, title):
 	return (stImg,title)
 	
 	
+""" ======================================== Blurring ======================================== """
+
+def blur(img, title):	
+	""" This method generates training images from the ground images by blurring the pixels.
+	
+	@param title - list of 4 corners of the title
+	@param img - the image to be transformed
+	@return (imgT,title) - the transformed image and coordinates of the title' corners
+	
+	"""
+	dx = random.randint(1,10)
+	dy = random.randint(1,10)
+	img = cv2.blur(img,(dx,dy))
+	return (img,title)
