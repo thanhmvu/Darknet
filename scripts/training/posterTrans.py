@@ -99,7 +99,7 @@ def randViewpoint(C,w,h):
 	z = int(zC + dz) if dx > 0 else int(zC + R)
 	
 	# Generate y
-	y = random.randrange(int(yC), int(yC + h), unit)
+	y = random.randrange(int(yC-h), int(yC), unit)
 	
 	return (x,y,z)
 
@@ -132,7 +132,7 @@ def perspective (img, title):
 	# Generate image plane 
 	P = randViewpoint(C,w,h) # plane origin
 	normal = np.subtract(C,P) # plane normal
-	# Specify the viewpoint
+	# Hardcoded viewpoint
 	V = np.subtract(P, normal*4)
 	
 	M1 = iTr.projection_matrix(P, normal, None, V) # 4x4 matrix
