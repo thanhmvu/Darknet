@@ -1,7 +1,6 @@
 import cv2
 import os
 import numpy as np
-# import random
 
 import config as CFG
 import utils
@@ -29,11 +28,10 @@ def transform(img):
 	r = CFG.TITLE_RATIO
 	title = [(0,0), (w-1,0), (w-1,int(h*r)), (0,int(h*r))]
 	
+	imgT, title = pTr.scaleAndTranslate(imgT,title)
 # 	imgT, title = pTr.perspective(imgT, title)
-	imgT, title = pTr.rotate(imgT,title)
-# 	imgT, title = pTr.scale(imgT,title)
+# 	imgT, title = pTr.rotate(imgT,title)
 # 	imgT, title = pTr.blur(imgT, title)
-# 	imgT, title = pTr.translate(imgT,title)
 	
 	titleArea = utils.boundingArea(title)
 	tBox = utils.formatLabel(titleArea, imgT.shape[:2])

@@ -178,11 +178,11 @@ def perspective (img, title):
 
 """ ======================================== Rotation ======================================== """
 
-def rotatePoint(pt, mat):
-	""" Method to rotate a 2D point using a given matrix
+def transformPoint(pt, mat):
+	""" Method to transform a 2D point using a given matrix
 	
-	@param pt - the point to rotate
-	@param mat - the 3x3 rotation matrix
+	@param pt - the point to be transformed
+	@param mat - the 2x3 transformation matrix
 	@return (x,y) - the new coordinates of the point after applying the matrix
 	
 	"""
@@ -217,8 +217,8 @@ def rotate(img, title):
 	M = cv2.getRotationMatrix2D((wB/2,hB/2), angle, 1) # (center(x,y),angle,scale)
 	
 	rtImg = cv2.warpAffine(imgB,M,(wB,hB))
-	poster = [rotatePoint(pt,M) for pt in poster]
-	title = [rotatePoint(pt,M) for pt in title]
+	poster = [transformPoint(pt,M) for pt in poster]
+	title = [transformPoint(pt,M) for pt in title]
 	hR,wR = rtImg.shape[:2]
 	
 	# Crop redundant background
@@ -235,23 +235,32 @@ def rotate(img, title):
 """ ======================================== Scaling ======================================== """
 
 
-def scale(img, title):	
-	""" This method generates training images from the ground images by rescaling the poster inside those images
+def scaleAndTranslate(img, title):	
+	""" This method generates training images from the ground images 
+	by rescaling and translating the poster inside those images.
+	The range of translation and scaling is hardcoded.
 	
 	@param title - list of 4 corners of the title
 	@param img - the image to be transformed
 	@return (imgT,title) - the transformed image and coordinates of the title' corners
 	
 	"""
-	scImg = img
-# 	if img is None: 
-# 		print 'ERROR: Input image is None'
-# 		return None
-# 	else:
-# 		h,w = img.shape[:2]
-# 		dim = ((int)(mult*w), (int)(mult*h)) # calculate new dimensions
-# 		scImg = cv2.resize(img,dim, interpolation = cv2.INTER_LINEAR)
-		
-	return (scImg,tBox)
+	h1,w1 = img.shape[:2]
+	# Generate n for scaling so that imageSize/ posterSize = n^2
+	n = random.randint(10,20)*0.1 
+	h2,w2 = (int(h1*n), int(w1*n))
+	
+	# Generate tx,ty for translation
+	x1 = int(-0.2*w1) ; x2 = int(w2 - 0.8*w1)
+	tx = random.randint(x1,x2)
+	y1 = 0 ; y2 = int(h2 - 0.8*h1)
+	ty = random.randint(y1,y2)
+	
+	# Transform image and calculate the new title
+	M = np.float32([[1,0,tx],[0,1,ty]])
+	stImg = cv2.warpAffine(img,M,(w2,h2))
+	title = [transformPoint(pt,M) for pt in title]
+	
+	return (stImg,title)
 	
 	
