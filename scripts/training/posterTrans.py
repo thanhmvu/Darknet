@@ -11,6 +11,9 @@ def addOcclusions(img):
 	The number of occlusions generated is random but in the range of [n1,n2].
 	The width of all occlusions is the same, which is a forth of the poster's standard width (STD_SIZE/3) 
 	
+	@param img - the image to add occlusions
+	@return the image with occlusions on it
+	
 	"""
 	occWidth = CFG.OCC_W
 	n1,n2 = CFG.OCC_NUM
@@ -40,9 +43,9 @@ def addOcclusions(img):
 
 def localCoords(P):
 	""" Adopted and modified from http://stackoverflow.com/questions/26369618/getting-local-2d-coordinates-of-vertices-of-a-planar-polygon-in-3d-space
-	Return the local 2D coordinates of each 3D points in set P, given that:
-	- these points are on the same plane in the original 3D coordinate system
-	- the size of P is greater or equal to 3
+	
+	@param P - a set of 3 or more 3D points on the same plane P
+	@return a set of local 2D coordinates of all 3D points relative to plane P, with the origin being the first point in the given set P
 	
 	"""
 	loc0 = P[0]                      # local origin
@@ -104,6 +107,13 @@ def randViewpoint(C,w,h):
 
 
 def cropPtImg(ptImg, M):
+	""" Method that crops the redundant background from a perspective transformed image
+	
+	@param ptImg - the transformed image to be cropped
+	@param M - the 4x4 perspective matrix
+	@return the cropped image
+	
+	"""
 	h,w = ptImg.shape[:2]
 	oldCorners = [(0,0), (w-1,0), (w-1,h-1), (0,h-1)]
 	
@@ -122,6 +132,10 @@ def cropPtImg(ptImg, M):
 
 def perspective (img, title):
 	""" This method generates training images from the ground images using perspective transformation.
+	
+	@param title - list of 4 corners of the title
+	@param img - the image to be transformed
+	@return (imgT,title) - the transformed image and coordinates of the title' corners
 	
 	"""
 	h,w = img.shape[:2]
@@ -165,6 +179,13 @@ def perspective (img, title):
 """ ======================================== Rotation ======================================== """
 
 def rotatePoint(pt, mat):
+	""" Method to rotate a 2D point using a given matrix
+	
+	@param pt - the point to rotate
+	@param mat - the 3x3 rotation matrix
+	@return (x,y) - the new coordinates of the point after applying the matrix
+	
+	"""
 	tmp = np.array([[pt[0]],[pt[1]],[1]])
 	ptMat = np.dot(mat, tmp)
 	x = int(ptMat[0][0])
@@ -173,7 +194,11 @@ def rotatePoint(pt, mat):
 
 def rotate(img, title):
 	""" This method generates training images from the ground images using rotation.
+	
 	@param title - list of 4 corners of the title
+	@param img - the image to be transformed
+	@return (imgT,title) - the transformed image and coordinates of the title' corners
+	
 	"""
 	angle = random.randint(-30,30)
 	h,w = img.shape[:2]
@@ -207,15 +232,18 @@ def rotate(img, title):
 	
 	return (rtImg,title)
 
-
-# """ This method generates training images from the ground images by rescaling them 
-# scale the poster, not the image. scale down
-
-# recalculate the tbox everytime
-# """
+""" ======================================== Scaling ======================================== """
 
 
-# def scale(img, mult):	
+def scale(img, title):	
+	""" This method generates training images from the ground images by rescaling the poster inside those images
+	
+	@param title - list of 4 corners of the title
+	@param img - the image to be transformed
+	@return (imgT,title) - the transformed image and coordinates of the title' corners
+	
+	"""
+	scImg = img
 # 	if img is None: 
 # 		print 'ERROR: Input image is None'
 # 		return None
@@ -224,7 +252,6 @@ def rotate(img, title):
 # 		dim = ((int)(mult*w), (int)(mult*h)) # calculate new dimensions
 # 		scImg = cv2.resize(img,dim, interpolation = cv2.INTER_LINEAR)
 		
-		
-# 		return (scImg,tBox)
+	return (scImg,tBox)
 	
 	
