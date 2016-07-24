@@ -1,13 +1,13 @@
 
 SRC_DIR = '../../../../db-deepnet/srcPosters/'
-# DST_DIR = '../../../../db-deepnet/training/'
-# LABELS_DIR = '../../../../db-deepnet/labels/'
-DST_DIR = './images/'
-LABELS_DIR = './labels/'
+DST_DIR = '../../../../db-deepnet/images/'
+LABELS_DIR = '../../../../db-deepnet/labels/'
+# DST_DIR = './images/'
+# LABELS_DIR = './labels/'
 
-LIB_SIZE = 2 # the total number is 400 ground images
-NUM_VAR = 2 # number of variation for each ground image
-STD_SIZE = 1000 
+LIB_SIZE = 5 # the total number is 400 ground images
+NUM_VAR = 100 # number of variation for each ground image
+STD_SIZE = 2000 
 TITLE_RATIO = 0.2 # is estimated to be the ratio of title's height/ poster's height
 
 OCC_W = STD_SIZE/4

@@ -29,9 +29,9 @@ def transform(img):
 	title = [(0,0), (w-1,0), (w-1,int(h*r)), (0,int(h*r))]
 	
 	imgT, title = pTr.scaleAndTranslate(imgT,title)
-# 	imgT, title = pTr.perspective(imgT, title)
-# 	imgT, title = pTr.rotate(imgT,title)
-# 	imgT, title = pTr.blur(imgT, title)
+	imgT, title = pTr.perspective(imgT, title)
+	imgT, title = pTr.rotate(imgT,title)
+	imgT, title = pTr.blur(imgT, title)
 	
 	titleArea = utils.boundingArea(title)
 	tBox = utils.formatLabel(titleArea, imgT.shape[:2])
@@ -53,7 +53,7 @@ def saveData(trainData, imgIdx, objIdx):
 		titleBox = trainData[1]
 
 		## Save the training image
-		imgT = utils.drawTitleBox(imgT,titleBox)
+# 		imgT = utils.drawTitleBox(imgT,titleBox)
 		cv2.imwrite(img_out,imgT)
 		print 'Created ' + img_out
 
@@ -87,59 +87,5 @@ for objIdx in range (0, CFG.LIB_SIZE):
 			tfOut = transform(img)
 			saveData(tfOut, imgIdx, objIdx)
 			imgIdx += 1
-    
-		
-		
-		
-		
-		
-		
-		
-# 		img = sizeStandardize(img,STD_SIZE)
-# 		addOcclusions(img)
-
-# 		### Perspective Transformation
-# 		ptRange = [x*0.01 for x in PT_RANGE]
-# 		rightRatios = [(r,0,r,0) for r in ptRange]
-# 		leftRatios  = [(0,r,0,r) for r in ptRange]
-# 		ratios = rightRatios + leftRatios
-		
-# 		for rs  in ratios:
-# 			# perform transformation
-# 			ptOut = perspectiveTransform(img,rs)
-# 			# save output data
-# 			transType = ratiosToStr(rs)
-# 			saveData(ptOut,cnt,i,'ptrans',transType)
-# 			# increase image index
-# 			cnt += 1
-
-# 		### Rotation
-# 		posAngles = [x for x in RT_RANGE]
-# 		negAngles = [-x for x in posAngles]
-# 		angles = posAngles + negAngles
-		
-# 		for angle  in angles:
-# 			# perform transformation
-# 			rtOut = rotate(img,angle)
-# 			# save output data
-# 			saveData(rtOut,cnt,i,'rotate',`angle`)
-# 			# increase image index
-# 			cnt += 1
-		
-# 		### Scaling
-# 		mults = [round(x*0.1,2) for x in SC_RANGE if x != 10] 
-			
-# 		for mult in mults:
-# 			# perform transformation
-# 			scOut = scale(img,mult)
-# 			# save output data
-# 			saveData(scOut,cnt,i,'scale',`mult`)
-# 			# increase image index
-# 			cnt += 1
-			
-		
-# 		### Blurring
-
-# 		### Translation
 
 

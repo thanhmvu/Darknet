@@ -280,7 +280,7 @@ def blur(img, title):
 	@return (imgT,title) - the transformed image and coordinates of the title' corners
 	
 	"""
-	dx = random.randint(1,10)
-	dy = random.randint(1,10)
+	dx = random.randint(1,5)
+	dy = random.randint(1,5)
 	img = cv2.blur(img,(dx,dy))
 	return (img,title)
