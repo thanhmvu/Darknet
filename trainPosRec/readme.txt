@@ -12,3 +12,11 @@ Where x, y, width, and height are relative to the image's width and height, with
     height = obj_h / img_h
 
 <objectClass> <xCenter/imgW> <yCenter/imgH> <objW/imgW> <objH/imgH>
+
+[train.txt - darknet input file]
+train.txt contains the names of all training images (one for each line)
+the text file itself can be located anywhere.
+
+[images/ - labels/]
+the labels and the images folders should be in the same location
+to look up the code where the 2 folders are used, go to darknet github and search for "labels" using the search engine
