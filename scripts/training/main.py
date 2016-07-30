@@ -45,7 +45,8 @@ def saveData(trainData, imgIdx, objIdx):
 	trainData = (trainImg, titleBox)
 	"""
 	# name format: trainIdx_groundIdx_trans_transType.jpg
-	img_out = CFG.DST_DIR + `imgIdx`.zfill(6) +'_'+ `objIdx`.zfill(3) +'.jpg'
+# 	img_out = CFG.DST_DIR + `imgIdx`.zfill(6) +'_'+ `objIdx`.zfill(3) +'.jpg'
+	img_out = CFG.DST_DIR + `imgIdx`.zfill(6) +'.jpg'
 	label_out = CFG.LABELS_DIR + `imgIdx`.zfill(6) +'.txt'
 			
 	if trainData != None:
@@ -74,7 +75,7 @@ if not os.path.exists(CFG.LABELS_DIR): os.mkdir(CFG.LABELS_DIR)
 	
 imgIdx = 0
 # Loop through all ground images
-for objIdx in range (0, CFG.LIB_SIZE):
+for objIdx in range (CFG.LIB_RANGE[0], CFG.LIB_RANGE[1]):
 	# read an image from the source folder
 	path_in = CFG.SRC_DIR + `objIdx`.zfill(3) + '.jpg'
 	img = cv2.imread(path_in)
@@ -88,4 +89,7 @@ for objIdx in range (0, CFG.LIB_SIZE):
 			saveData(tfOut, imgIdx, objIdx)
 			imgIdx += 1
 
-
+f = open(CFG.NOTE_DIR + 'data.txt','w')
+f.write("LIB_RANGE: " + `CFG.LIB_RANGE` + "\n")
+f.write("NUM_VAR: " + `CFG.NUM_VAR` + "\n")
+f.close()
