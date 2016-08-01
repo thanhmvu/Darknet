@@ -253,7 +253,7 @@ detection_layer parse_detection(list *options, size_params params)
     int num = option_find_int(options, "num", 1);
     int side = option_find_int(options, "side", 7);
     
-    printf("\n => The following statistic should satisfy the equation: side *side *((1 + l.coords) *l.n +l.classes) == inputs\n")
+    printf("\n => The following statistic should satisfy the equation: side *side *((1 + l.coords) *l.n +l.classes) == inputs\n");
     printf("  side: %d \n  coords: %d \n  n: %d \n  classes: %d \n  inputs: %d \n", side, coords, num, classes, params.inputs);
   
     detection_layer layer = make_detection_layer(params.batch, params.inputs, num, side, classes, coords, rescore);
