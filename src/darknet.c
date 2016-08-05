@@ -14,8 +14,6 @@
 
 extern void run_imagenet(int argc, char **argv);
 extern void run_yolo(int argc, char **argv);
-extern void run_poster(int argc, char **argv);
-extern void run_lenet(int argc, char **argv);
 extern void run_coco(int argc, char **argv);
 extern void run_writing(int argc, char **argv);
 extern void run_captcha(int argc, char **argv);
@@ -29,6 +27,9 @@ extern void run_tag(int argc, char **argv);
 extern void run_cifar(int argc, char **argv);
 extern void run_go(int argc, char **argv);
 extern void run_art(int argc, char **argv);
+extern void run_lenet(int argc, char **argv);
+extern void run_poster_detect(int argc, char **argv);
+extern void run_poster_classify(int argc, char **argv);
 
 void change_rate(char *filename, float scale, float add)
 {
@@ -267,10 +268,6 @@ int main(int argc, char **argv)
         average(argc, argv);
     } else if (0 == strcmp(argv[1], "yolo")){
         run_yolo(argc, argv);
-    } else if (0 == strcmp(argv[1], "poster")){
-        run_poster(argc, argv);
-    } else if (0 == strcmp(argv[1], "lenet")){
-        run_lenet(argc, argv);
     } else if (0 == strcmp(argv[1], "cifar")){
         run_cifar(argc, argv);
     } else if (0 == strcmp(argv[1], "go")){
@@ -323,6 +320,12 @@ int main(int argc, char **argv)
         visualize(argv[2], (argc > 3) ? argv[3] : 0);
     } else if (0 == strcmp(argv[1], "imtest")){
         test_resize(argv[2]);
+    } else if (0 == strcmp(argv[1], "lenet")){
+        run_lenet(argc, argv);
+    } else if (0 == strcmp(argv[1], "poster_detect")){
+        run_poster_detect(argc, argv);
+    } else if (0 == strcmp(argv[1], "poster_classify")){
+        run_poster_classify(argc, argv);
     } else {
         fprintf(stderr, "Not an option: %s\n", argv[1]);
     }
