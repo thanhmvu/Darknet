@@ -45,9 +45,8 @@ def saveData(trainData, imgIdx, objIdx):
 	trainData = (trainImg, titleBox)
 	"""
 	# name format: trainIdx_groundIdx_trans_transType.jpg
-# 	img_out = CFG.DST_DIR + `imgIdx`.zfill(6) +'_'+ `objIdx`.zfill(3) +'.jpg'
-	img_out = CFG.DST_DIR + `imgIdx`.zfill(6) +'.jpg'
-	label_out = CFG.LABELS_DIR + `imgIdx`.zfill(6) +'.txt'
+	img_out = CFG.DST_DIR + `objIdx`.zfill(6) +"_" +`imgIdx`.zfill(6) +'.jpg'
+	label_out = CFG.LABELS_DIR + `objIdx`.zfill(6) +"_" +`imgIdx`.zfill(6) +'.txt'
 			
 	if trainData != None:
 		imgT = trainData[0]
@@ -73,21 +72,22 @@ def saveData(trainData, imgIdx, objIdx):
 if not os.path.exists(CFG.DST_DIR): os.mkdir(CFG.DST_DIR)
 if not os.path.exists(CFG.LABELS_DIR): os.mkdir(CFG.LABELS_DIR)
 	
-imgIdx = 0
+# imgIdx = 0
 # Loop through all ground images
 for objIdx in range (CFG.LIB_RANGE[0], CFG.LIB_RANGE[1]):
 	# read an image from the source folder
-	path_in = CFG.SRC_DIR + `objIdx`.zfill(3) + '.jpg'
+	path_in = CFG.SRC_DIR + `objIdx`.zfill(6) + '.jpg'
 	img = cv2.imread(path_in)
 	
 	if img is None: 
 		print 'ERROR: Cannot read' + path_in
 	else:
 		# Loop and create x training variations for each ground image
-		for j in range (0, CFG.NUM_VAR):
+# 		for j in range (0, CFG.NUM_VAR):
+		for imgIdx in range (0, CFG.NUM_VAR):
 			tfOut = transform(img)
 			saveData(tfOut, imgIdx, objIdx)
-			imgIdx += 1
+# 			imgIdx += 1
 
 f = open(CFG.NOTE_DIR + 'data.txt','w')
 f.write("LIB_RANGE: " + `CFG.LIB_RANGE` + "\n")
