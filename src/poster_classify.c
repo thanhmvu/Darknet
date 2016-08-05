@@ -2,16 +2,18 @@
 #include "utils.h"
 #include "parser.h"
 
-// char *classify_labels[] = {"zero","one","two","three","four","five","six","seven","eight","nine"};
+
 int classes = 90;
+
 
 void train_classify(char *cfgfile, char *weightfile)
 {
+    char *train_images = "../../database/trainPosters/90C_1kP_s0_train/train.txt";
+    char *backup_directory = "../../database/trainPosters/90C_1kP_s0_train/backup/classify_5C_weights";
     data_seed = time(0);
     srand(time(0));
     float avg_loss = -1;
     char *base = basecfg(cfgfile);
-    char *backup_directory = "../../database/trainPosters/train.90C.1kP_v2/weights_classify_200k/";
     printf("%s\n", base);
     network net = parse_network_cfg(cfgfile);
     if(weightfile){
@@ -20,7 +22,7 @@ void train_classify(char *cfgfile, char *weightfile)
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
     int imgs = net.batch;
     int i = *net.seen/imgs;
-    list *plist = get_paths("../../database/trainPosters/train.90C.1kP_v2/train.txt");
+    list *plist = get_paths(train_images);
     char **paths = (char **)list_to_array(plist);
     printf("%d\n", plist->size);
     clock_t time;
@@ -36,8 +38,7 @@ void train_classify(char *cfgfile, char *weightfile)
         avg_loss = avg_loss*.9 + loss*.1;
         printf("%d: %f, %f avg, %lf seconds, %d images\n", i, loss, avg_loss, sec(clock()-time), *net.seen);
         free_data(train);
-        //if((i % 100) == 0) net.learning_rate *= .1;
-        if(i%100==0){
+        if(i%1000==0 || (i < 1000 && i%100 == 0)){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights",backup_directory,base, i);
             save_weights(net, buff);
@@ -53,7 +54,7 @@ void validate_classify(char *cfgfile, char *weightfile)
     }
     srand(time(0));
 
-    list *plist = get_paths("../../database/testPosters/0_90_100/test.txt");
+    list *plist = get_paths("../../database/testPosters/90C_1kP_s0_test/test.txt");
 
     char **paths = (char **)list_to_array(plist);
     int m = plist->size;
@@ -65,8 +66,8 @@ void validate_classify(char *cfgfile, char *weightfile)
     free_data(val);
 }
 
-void test_classify(char *cfgfile, char *weightfile, char *filename)
-{
+// void test_classify(char *cfgfile, char *weightfile, char *filename)
+// {
 //     network net = parse_network_cfg(cfgfile);
 //     if(weightfile){
 //         load_weights(&net, weightfile);
@@ -99,7 +100,7 @@ void test_classify(char *cfgfile, char *weightfile, char *filename)
 //         free_image(im);
 //         if (filename) break;
 //     }
-}
+// }
 
 void run_poster_classify(int argc, char **argv)
 {
@@ -110,9 +111,9 @@ void run_poster_classify(int argc, char **argv)
 
     char *cfg = argv[3];
     char *weights = (argc > 4) ? argv[4] : 0;
-    char *filename = (argc > 5) ? argv[5]: 0;
-    if(0==strcmp(argv[2], "test")) test_classify(cfg, weights, filename);
-    else if(0==strcmp(argv[2], "train")) train_classify(cfg, weights);
+//     char *filename = (argc > 5) ? argv[5]: 0;
+    if(0==strcmp(argv[2], "train")) train_classify(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_classify(cfg, weights);
+//     else if(0==strcmp(argv[2], "test")) test_classify(cfg, weights, filename);
 }
 

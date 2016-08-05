@@ -588,3 +588,22 @@ float **one_hot_encode(float *a, int n, int k)
     return t;
 }
 
+int get_poster_class(char * path){
+  // methods to extract the class from the path
+	// provided that the path's format is <path-to-image>/xxxxxx_yyyyyy.jpg
+	// where xxxxxx is the class index.
+	char* copy = malloc (1 + strlen(path));
+	strcpy(copy,path);
+	char* dim = "/._"; // divide string by "/","." and "_"
+	char* iterator = strtok(copy,dim);
+  char* buff = "-1"; 
+	char* class = "-1";
+	while(strcmp(iterator,"jpg") != 0){
+	    class = buff;
+	    buff = iterator;
+	    iterator = strtok(NULL,dim);
+	}
+// 	printf("Loaded %s, class %d\n",path,atoi(class));
+  return atoi(class);
+}
+

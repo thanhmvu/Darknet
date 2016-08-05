@@ -1043,3 +1043,26 @@ data *split_data(data d, int part, int total)
     return split;
 }
 
+matrix load_labels_paths2(char **paths, int n, int k)
+{
+    matrix y = make_matrix(n, k);
+    int i;
+    for(i = 0; i < n ; ++i){
+        float *truth = y.vals[i];
+        memset(truth, 0, k*sizeof(float)); // k - number of classes
+        int j = get_poster_class(paths[i]);
+        truth[j] = 1;
+    }
+    return y;
+}
+
+data load_data2(char **paths, int n, int m, int k, int w, int h)
+{
+    if(m) paths = get_random_paths(paths, n, m);
+    data d = {0};
+    d.shallow = 0;
+    d.X = load_image_paths(paths, n, w, h);
+    d.y = load_labels_paths2(paths, n, k);
+    if(m) free(paths);
+    return d;
+}
