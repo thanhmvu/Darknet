@@ -15,8 +15,8 @@ char *poster_names[] = {"0","1","2","3","4"};
 
 void train_poster(char *cfgfile, char *weightfile)
 {
-    char *train_images = "./trainYOLO/train.txt";
-    char *backup_directory = "./trainYOLO/backup/";
+    char *train_images = "../../database/trainPosters/90C_1kP_s0_train/train.txt";
+    char *backup_directory = "../../database/trainPosters/90C_1kP_s0_train/weights_200k";
     srand(time(0));
     data_seed = time(0);
     char *base = basecfg(cfgfile);
@@ -112,26 +112,26 @@ void convert_poster_detections(float *predictions, int classes, int num, int squ
     }
 }
 
-void print_poster_detections(FILE **fps, char *id, box *boxes, float **probs, int total, int classes, int w, int h)
-{
-    int i, j;
-    for(i = 0; i < total; ++i){
-        float xmin = boxes[i].x - boxes[i].w/2.;
-        float xmax = boxes[i].x + boxes[i].w/2.;
-        float ymin = boxes[i].y - boxes[i].h/2.;
-        float ymax = boxes[i].y + boxes[i].h/2.;
+// void print_poster_detections(FILE **fps, char *id, box *boxes, float **probs, int total, int classes, int w, int h)
+// {
+//     int i, j;
+//     for(i = 0; i < total; ++i){
+//         float xmin = boxes[i].x - boxes[i].w/2.;
+//         float xmax = boxes[i].x + boxes[i].w/2.;
+//         float ymin = boxes[i].y - boxes[i].h/2.;
+//         float ymax = boxes[i].y + boxes[i].h/2.;
 
-        if (xmin < 0) xmin = 0;
-        if (ymin < 0) ymin = 0;
-        if (xmax > w) xmax = w;
-        if (ymax > h) ymax = h;
+//         if (xmin < 0) xmin = 0;
+//         if (ymin < 0) ymin = 0;
+//         if (xmax > w) xmax = w;
+//         if (ymax > h) ymax = h;
 
-        for(j = 0; j < classes; ++j){
-            if (probs[i][j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, probs[i][j],
-                    xmin, ymin, xmax, ymax);
-        }
-    }
-}
+//         for(j = 0; j < classes; ++j){
+//             if (probs[i][j]) fprintf(fps[j], "%s %f %f %f %f %f\n", id, probs[i][j],
+//                     xmin, ymin, xmax, ymax);
+//         }
+//     }
+// }
 
 void validate_poster(char *cfgfile, char *weightfile)
 {
@@ -361,6 +361,148 @@ void test_posReg(char *cfgfile, char *weightfile, char *folder, float thresh, in
 	printf("Accuracy: %.0f%%\n", correct* 100.0/N);
 }
 
+int get_poster_class(char * path){
+	int ipp = 100; // number of test images per poster
+  // methods to extract the class from the path
+	char* copy = malloc (1 + strlen(path));
+	strcpy(copy,path);
+	char* dim = "/."; // divide string by "/" and "."
+	char* iterator = strtok(copy,dim);
+  char* index = "-1";
+	while(strcmp(iterator,"jpg") != 0){
+	    index = iterator;
+	    iterator = strtok(NULL,dim);
+	}
+	int class = atoi(index)/ipp;
+  return class;
+}
+
+int updateCorrect(int num, float thresh, float **probs, int classes,char * path, int correct){
+    float max_prob = 0; float max_prob2 = 0;
+    int max_class = -1; int max_class2 = -1;
+    int j;
+    for(j = 0; j < num; ++j){
+        int class = max_index(probs[j], classes);
+        float prob = probs[j][class];
+        if(prob > thresh){
+            if (prob> max_prob){
+                max_prob = prob;
+                max_class = class;
+            } else if (prob> max_prob2) {
+                max_prob2 = prob;
+                max_class2 = class; } } }
+    
+    // search for max_class in the ground truth
+    if (max_class != get_poster_class(path)){ 
+      printf("==] THANH: image %s\n", path);
+      printf("1st poster: %d - %.0f%%\n",  max_class, max_prob*100);
+      printf("2nd poster: %d - %.0f%%\n",  max_class2, max_prob2*100);
+    }else{ correct++; }
+    return correct;
+}
+
+void validate_posReg(char *cfgfile, char *weightfile, char * filename)
+{
+    network net = parse_network_cfg(cfgfile);
+    if(weightfile){
+        load_weights(&net, weightfile);
+    }
+    set_batch_network(&net, 1);
+    fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
+    srand(time(0));
+
+//     char *base = "results/comp4_det_test_";
+    //list *plist = get_paths("data/voc.2007.test");
+		char * path = (filename != 0) ? filename: "../../database/testPosters/0_90_100/test.txt";
+		list *plist = get_paths(path);
+    //list *plist = get_paths("data/voc.2012.test");
+    char **paths = (char **)list_to_array(plist);
+
+    layer l = net.layers[net.n-1];
+    int classes = l.classes;
+    int square = l.sqrt;
+    int side = l.side;
+
+    int j;
+//     FILE **fps = calloc(classes, sizeof(FILE *));
+//     for(j = 0; j < classes; ++j){
+//         char buff[1024];
+//         snprintf(buff, 1024, "%s%s.txt", base, poster_names[j]);
+//         fps[j] = fopen(buff, "w");
+//     }
+    box *boxes = calloc(side*side*l.n, sizeof(box));
+    float **probs = calloc(side*side*l.n, sizeof(float *));
+    for(j = 0; j < side*side*l.n; ++j) probs[j] = calloc(classes, sizeof(float *));
+
+    int m = plist->size;
+    int i=0;
+    int t;
+
+    float thresh = .001;
+    int nms = 1;
+    float iou_thresh = .5;
+
+    int nthreads = 2;
+    image *val = calloc(nthreads, sizeof(image));
+    image *val_resized = calloc(nthreads, sizeof(image));
+    image *buf = calloc(nthreads, sizeof(image));
+    image *buf_resized = calloc(nthreads, sizeof(image));
+    pthread_t *thr = calloc(nthreads, sizeof(pthread_t));
+
+    load_args args = {0};
+    args.w = net.w;
+    args.h = net.h;
+    args.type = IMAGE_DATA;
+
+    for(t = 0; t < nthreads; ++t){
+        args.path = paths[i+t];
+        args.im = &buf[t];
+        args.resized = &buf_resized[t];
+        thr[t] = load_data_in_thread(args);
+    }
+    time_t start = time(0);
+	
+    int total = 0;
+    int correct = 0;
+    for(i = nthreads; i < m+nthreads; i += nthreads){
+        fprintf(stderr, "%d\n", i);
+        for(t = 0; t < nthreads && i+t-nthreads < m; ++t){
+            pthread_join(thr[t], 0);
+            val[t] = buf[t];
+            val_resized[t] = buf_resized[t];
+        }
+        for(t = 0; t < nthreads && i+t < m; ++t){
+            args.path = paths[i+t];
+            args.im = &buf[t];
+            args.resized = &buf_resized[t];
+            thr[t] = load_data_in_thread(args);
+        }
+        for(t = 0; t < nthreads && i+t-nthreads < m; ++t){
+            char *path = paths[i+t-nthreads];
+            char *id = basecfg(path);
+            float *X = val_resized[t].data;
+            float *predictions = network_predict(net, X);
+            int w = val[t].w;
+            int h = val[t].h;
+            convert_poster_detections(predictions, classes, l.n, square, side, w, h, thresh, probs, boxes, 0);
+            if (nms) do_nms_sort(boxes, probs, side*side*l.n, classes, iou_thresh);
+//             print_poster_detections(fps, id, boxes, probs, side*side*l.n, classes, w, h);
+            free(id);
+            free_image(val[t]);
+            free_image(val_resized[t]);
+
+            // get accuracy of classification
+            // [!] the method to extract the truth class is hardcored in updateCorrect
+            correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct);
+            total++;
+          
+            printf("Current classification accuracy: %.02f%%\n", correct*100.0/total);	
+        }
+    }
+    printf("Final classification accuracy: %.02f%%\n", correct*100.0/total);
+    fprintf(stderr, "Total Detection Time: %f Seconds\n", (double)(time(0) - start));
+}
+
 void run_poster(int argc, char **argv)
 {
     float thresh = find_float_arg(argc, argv, "-thresh", .2);
@@ -378,4 +520,5 @@ void run_poster(int argc, char **argv)
     else if(0==strcmp(argv[2], "train")) train_poster(cfg, weights);
     else if(0==strcmp(argv[2], "valid")) validate_poster(cfg, weights);
     else if(0==strcmp(argv[2], "testpr")) test_posReg(cfg, weights, filename, thresh, N, ipp);
+    else if(0==strcmp(argv[2], "validpr")) validate_posReg(cfg, weights, filename);
 }
