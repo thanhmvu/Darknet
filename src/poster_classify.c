@@ -3,13 +3,13 @@
 #include "parser.h"
 
 
-int classes = 90;
+int classes = 5;
 
 
 void train_classify(char *cfgfile, char *weightfile)
 {
-    char *train_images = "../../database/trainPosters/90C_1kP_s0_train/train.txt";
-    char *backup_directory = "../../database/trainPosters/90C_1kP_s0_train/backup/classify_5C_weights";
+    char *train_images = "../../database/trainPosters/5C_1kP_s0_train/train.txt";
+    char *backup_directory = "../../database/trainPosters/5C_1kP_s0_train/backup/classify_weights";
     data_seed = time(0);
     srand(time(0));
     float avg_loss = -1;
@@ -46,7 +46,7 @@ void train_classify(char *cfgfile, char *weightfile)
     }
 }
 
-void validate_classify(char *cfgfile, char *weightfile)
+void validate_classify(char *cfgfile, char *weightfile, char *filename)
 {
     network net = parse_network_cfg(cfgfile);
     if(weightfile){
@@ -54,7 +54,8 @@ void validate_classify(char *cfgfile, char *weightfile)
     }
     srand(time(0));
 
-    list *plist = get_paths("../../database/testPosters/90C_1kP_s0_test/test.txt");
+    char * path = (filename != 0) ? filename: "../../database/testPosters/5C_100P_s0_test/test.txt";
+    list *plist = get_paths(path);
 
     char **paths = (char **)list_to_array(plist);
     int m = plist->size;
@@ -111,9 +112,9 @@ void run_poster_classify(int argc, char **argv)
 
     char *cfg = argv[3];
     char *weights = (argc > 4) ? argv[4] : 0;
-//     char *filename = (argc > 5) ? argv[5]: 0;
+    char *filename = (argc > 5) ? argv[5]: 0;
     if(0==strcmp(argv[2], "train")) train_classify(cfg, weights);
-    else if(0==strcmp(argv[2], "valid")) validate_classify(cfg, weights);
+    else if(0==strcmp(argv[2], "valid")) validate_classify(cfg, weights, filename);
 //     else if(0==strcmp(argv[2], "test")) test_classify(cfg, weights, filename);
 }
 

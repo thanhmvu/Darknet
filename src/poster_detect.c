@@ -17,7 +17,6 @@
 void convert_poster_detections(float *predictions, int classes, int num, int square, int side, int w, int h, float thresh, float **probs, box *boxes, int only_objectness)
 {
     int i,j,n;
-    //int per_cell = 5*num+classes;
     for (i = 0; i < side*side; ++i){
         int row = i / side;
         int col = i % side;
@@ -75,8 +74,8 @@ int updateCorrect(int num, float thresh, float **probs, int classes, char * path
 
 void train_poster(char *cfgfile, char *weightfile)
 {
-    char *train_images = "../../database/trainPosters/90C_1kP_s0_train/train.txt";
-    char *backup_directory = "../../database/trainPosters/90C_1kP_s0_train/backup/detect_5C_weights";
+    char *train_images = "../../database/trainPosters/5C_1kP_s0_train/train.txt";
+    char *backup_directory = "../../database/trainPosters/5C_1kP_s0_train/backup/detect_weights";
     srand(time(0));
     data_seed = time(0);
     char *base = basecfg(cfgfile);
@@ -155,7 +154,7 @@ void validate_poster(char *cfgfile, char *weightfile, char * filename)
     fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
     srand(time(0));
 
-		char * path = (filename != 0) ? filename: "../../database/testPosters/90C_100P_s0_test/test.txt";
+		char * path = (filename != 0) ? filename: "../../database/testPosters/5C_100P_s0_test/test.txt";
 		list *plist = get_paths(path);
     char **paths = (char **)list_to_array(plist);
 
@@ -293,7 +292,7 @@ void run_poster_detect(int argc, char **argv)
 {
 //     float thresh = find_float_arg(argc, argv, "-thresh", .2);
     if(argc < 4){
-        fprintf(stderr, "usage: %s %s [train/test/valid] [cfg] [weights (optional)]\n", argv[0], argv[1]);
+        fprintf(stderr, "usage: ./darknet poster_detect [train/test/valid] [cfg] [weights (optional)]\n");
         return;
     }
 
