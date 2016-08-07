@@ -45,8 +45,8 @@ def saveData(trainData, imgIdx, objIdx):
 	trainData = (trainImg, titleBox)
 	"""
 	# name format: trainIdx_groundIdx_trans_transType.jpg
-	img_out = CFG.DST_DIR + `objIdx`.zfill(6) +"_" +`imgIdx`.zfill(6) +'.jpg'
-	label_out = CFG.LABELS_DIR + `objIdx`.zfill(6) +"_" +`imgIdx`.zfill(6) +'.txt'
+	img_out = CFG.IMAGE_DIR + `objIdx`.zfill(6) +"_" +`imgIdx`.zfill(6) +'.jpg'
+	label_out = CFG.LABEL_DIR + `objIdx`.zfill(6) +"_" +`imgIdx`.zfill(6) +'.txt'
 			
 	if trainData != None:
 		imgT = trainData[0]
@@ -70,7 +70,9 @@ def saveData(trainData, imgIdx, objIdx):
 """ ======================================== Begining of main code ======================================== """
 
 if not os.path.exists(CFG.DST_DIR): os.mkdir(CFG.DST_DIR)
-if not os.path.exists(CFG.LABELS_DIR): os.mkdir(CFG.LABELS_DIR)
+if not os.path.exists(CFG.IMAGE_DIR): os.mkdir(CFG.IMAGE_DIR)
+if not os.path.exists(CFG.LABEL_DIR): os.mkdir(CFG.LABEL_DIR)
+if not os.path.exists(CFG.BACKUP): os.mkdir(CFG.BACKUP)
 	
 # imgIdx = 0
 # Loop through all ground images
@@ -89,7 +91,7 @@ for objIdx in range (CFG.LIB_RANGE[0], CFG.LIB_RANGE[1]):
 			saveData(tfOut, imgIdx, objIdx)
 # 			imgIdx += 1
 
-f = open(CFG.NOTE_DIR + 'data.txt','w')
+f = open(CFG.DST_DIR + 'data.txt','w')
 f.write("LIB_RANGE: " + `CFG.LIB_RANGE` + "\n")
 f.write("NUM_VAR: " + `CFG.NUM_VAR` + "\n")
 f.close()
