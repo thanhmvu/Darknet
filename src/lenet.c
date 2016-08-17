@@ -27,7 +27,8 @@ void train_lenet(char *cfgfile, char *weightfile)
     while(get_current_batch(net) < net.max_batches){
         ++i;
         time=clock();
-        data train = load_data(paths, imgs, plist->size, labels, 10, net.w, net.h);
+        data train = load_data_lenet(paths, imgs, plist->size, labels, 10, net.w, net.h);
+//         data train = load_data(paths, imgs, plist->size, labels, 10, net.w, net.h);
         printf("Loaded: %lf seconds\n", sec(clock()-time));
 
         time=clock();
@@ -60,7 +61,8 @@ void validate_lenet(char *filename, char *weightfile)
     int m = plist->size;
     free_list(plist);
 
-    data val = load_data(paths, m, 0, labels, 10, net.w, net.h);
+    data val = load_data_lenet(paths, m, 0, labels, 10, net.w, net.h);
+//     data val = load_data(paths, m, 0, labels, 10, net.w, net.h);
     float *acc = network_accuracies(net, val, 2);
     printf("Validation Accuracy: %f, %d images\n", acc[0], m);
     free_data(val);

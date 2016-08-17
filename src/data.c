@@ -1043,6 +1043,36 @@ data *split_data(data d, int part, int total)
     return split;
 }
 
+// THANH's methods
+
+matrix load_image_paths_lenet(char **paths, int n, int w, int h)
+{
+    int i;
+    matrix X;
+    X.rows = n;
+    X.vals = calloc(X.rows, sizeof(float*));
+    X.cols = 0;
+
+    for(i = 0; i < n; ++i){
+        //image im = load_image_color(paths[i], w, h);
+        image im = load_image(paths[i], w, h,1);
+        X.vals[i] = im.data;
+        X.cols = im.h*im.w*im.c;
+    }
+    return X;
+}
+
+data load_data_lenet(char **paths, int n, int m, char **labels, int k, int w, int h)
+{
+    if(m) paths = get_random_paths(paths, n, m);
+    data d = {0};
+    d.shallow = 0;
+    d.X = load_image_paths_lenet(paths, n, w, h);
+    d.y = load_labels_paths(paths, n, labels, k);
+    if(m) free(paths);
+    return d;
+}
+
 matrix load_labels_paths2(char **paths, int n, int k)
 {
     matrix y = make_matrix(n, k);
