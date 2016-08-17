@@ -1,6 +1,7 @@
 import cv2
 import os
 import numpy as np
+import glob
 
 import config as CFG
 import utils
@@ -73,25 +74,38 @@ if not os.path.exists(CFG.DST_DIR): os.mkdir(CFG.DST_DIR)
 if not os.path.exists(CFG.IMAGE_DIR): os.mkdir(CFG.IMAGE_DIR)
 if not os.path.exists(CFG.LABEL_DIR): os.mkdir(CFG.LABEL_DIR)
 if not os.path.exists(CFG.BACKUP): os.mkdir(CFG.BACKUP)
-	
-# imgIdx = 0
+if not os.path.exists(CFG.BACKUP+'classify_weights/'): os.mkdir(CFG.BACKUP+'classify_weights/')
+if not os.path.exists(CFG.BACKUP+'detect_weights/'): os.mkdir(CFG.BACKUP+'detect_weights/')
+
+
 # Loop through all ground images
-for objIdx in range (CFG.LIB_RANGE[0], CFG.LIB_RANGE[1]):
+for objIdx in range (0, CFG.CLASSES):
 	# read an image from the source folder
-	path_in = CFG.SRC_DIR + `objIdx`.zfill(6) + '.jpg'
+	path_in = CFG.SRC_DIR + CFG.LABELS[objIdx] + '.jpg'
 	img = cv2.imread(path_in)
 	
 	if img is None: 
 		print 'ERROR: Cannot read' + path_in
 	else:
 		# Loop and create x training variations for each ground image
-# 		for j in range (0, CFG.NUM_VAR):
 		for imgIdx in range (0, CFG.NUM_VAR):
 			tfOut = transform(img)
 			saveData(tfOut, imgIdx, objIdx)
-# 			imgIdx += 1
 
 f = open(CFG.DST_DIR + 'data.txt','w')
-f.write("LIB_RANGE: " + `CFG.LIB_RANGE` + "\n")
+f.write("LABEL_RANGE: " + `CFG.LIB_RANGE` + "\n")
+f.write("CLASSES: " + `CFG.CLASSES` + "\n")
 f.write("NUM_VAR: " + `CFG.NUM_VAR` + "\n")
 f.close()
+
+print CFG.LABELS
+
+# create file for darknet's input
+def getImgDir():
+  f = open(CFG.DST_DIR + CFG.TASK +'2.txt','w')
+  for img in sorted(glob.glob(CFG.IMAGE_DIR+"*")):
+    f.write(os.path.realpath(img) + '\n')
+  f.close()
+
+getImgDir()
+print "Done!"
