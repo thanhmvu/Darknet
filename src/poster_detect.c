@@ -60,11 +60,12 @@ int updateCorrect(int num, float thresh, float **probs, int classes, char * path
 		int truthClass = get_poster_class(path); // in utils.c
 	
 		// Print and update
-		if (max_class != truthClass){ 
+		if (max_class == truthClass){ correct++; }
+		else{
 			printf("==] THANH: image %s\n", path);
 			printf("1st poster: %d - %.0f%%\n",  max_class, max_prob*100);
 			printf("2nd poster: %d - %.0f%%\n",  max_class2, max_prob2*100);
-		} else { correct++; }
+		}
 		return correct;
 }
 
@@ -72,10 +73,8 @@ int updateCorrect(int num, float thresh, float **probs, int classes, char * path
 
 /*==================================== Main methods =====================================*/
 
-void train_poster(char *cfgfile, char *weightfile)
+void train_poster(char *cfgfile, char *weightfile, char *train_images, char *backup_directory)
 {
-    char *train_images = "../../database/trainPosters/5C_1kP_s0_train/train.txt";
-    char *backup_directory = "../../database/trainPosters/5C_1kP_s0_train/backup/detect_weights";
     srand(time(0));
     data_seed = time(0);
     char *base = basecfg(cfgfile);
@@ -144,7 +143,7 @@ void train_poster(char *cfgfile, char *weightfile)
 }
 
 
-void validate_poster(char *cfgfile, char *weightfile, char * filename)
+void validate_poster(char *cfgfile, char *weightfile, char * testImgs)
 {
     network net = parse_network_cfg(cfgfile);
     if(weightfile){
@@ -154,7 +153,7 @@ void validate_poster(char *cfgfile, char *weightfile, char * filename)
     fprintf(stderr, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
     srand(time(0));
 
-		char * path = (filename != 0) ? filename: "../../database/testPosters/5C_100P_s0_test/test.txt";
+		char * path = testImgs;
 		list *plist = get_paths(path);
     char **paths = (char **)list_to_array(plist);
 
@@ -299,7 +298,8 @@ void run_poster_detect(int argc, char **argv)
     char *cfg = argv[3];
     char *weights = (argc > 4) ? argv[4] : 0;
     char *filename = (argc > 5) ? argv[5]: 0;
-    if(0==strcmp(argv[2], "train")) train_poster(cfg, weights);
+    char *backup = (argc > 6) ? argv[6]: 0;
+    if(0==strcmp(argv[2], "train")) train_poster(cfg, weights, filename, backup);
     else if(0==strcmp(argv[2], "valid")) validate_poster(cfg, weights, filename);
 //     else if(0==strcmp(argv[2], "test")) test_poster(cfg, weights, filename, thresh);
 }
