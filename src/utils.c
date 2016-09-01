@@ -607,3 +607,20 @@ int get_poster_class(char * path){
   return atoi(class);
 }
 
+char * get_file_name(char * path){
+  // methods to extract the class from the path
+	// provided that the path's format is <path-to-image>/xxxxxx_yyyyyy.jpg
+	// where xxxxxx is the class index.
+	char* copy = malloc (1 + strlen(path));
+	strcpy(copy,path);
+	char* dim = "/"; // divide string by "/"
+	char* iterator = strtok(copy,dim);
+	char* name = "-1";
+	while(iterator != NULL){
+	    name = iterator;
+	    iterator = strtok(NULL,dim);
+	}
+// 	printf("Loaded %s, class %d\n",path,atoi(class));
+  return name;
+}
+
