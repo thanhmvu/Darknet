@@ -39,6 +39,24 @@ def addOcclusions(img):
 	return img 
 
 
+""" ========================================== Lighting ========================================= """
+def lighting(img, title):
+	brightness = random.randint(2,19)*0.1
+	
+	ltImg = cv2.cvtColor(img,cv2.COLOR_RGB2LAB)
+	
+	# change the lighting
+	for j, row in enumerate(ltImg):
+		for i, [l,a,b] in enumerate(row):
+			tmp = int(l*brightness)
+			l = tmp if tmp < 255 else 255
+			ltImg[j][i] = [l,a,b]
+	
+	ltImg = cv2.cvtColor(ltImg,cv2.COLOR_LAB2RGB)
+
+	return (ltImg,title)
+
+
 """ ======================================== Perspective ======================================== """
 
 def localCoords(P):
@@ -201,6 +219,8 @@ def rotate(img, title):
 	
 	"""
 	angle = random.randint(-30,30)
+	buff = random.choice([0,0,0,90,180,270]) # in case the user rotate the image
+	angle += buff
 	h,w = img.shape[:2]
 	poster = [(0,0), (w-1,0), (w-1,h-1), (0,h-1)] # 4 corners
 	

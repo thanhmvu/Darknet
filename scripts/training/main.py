@@ -33,6 +33,7 @@ def transform(img):
 	imgT, title = pTr.perspective(imgT, title)
 	imgT, title = pTr.rotate(imgT,title)
 	imgT, title = pTr.blur(imgT, title)
+	imgT, title = pTr.lighting(imgT, title)
 	
 	titleArea = utils.boundingArea(title)
 	tBox = utils.formatLabel(titleArea, imgT.shape[:2])
