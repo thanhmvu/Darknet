@@ -7,11 +7,16 @@
 #include "demo.h"
 #include "string.h"
 
+#include <sys/stat.h>
+#include <stdio.h>
+
 #ifdef OPENCV
 #include "opencv2/highgui/highgui_c.h"
 #endif
 
 
+char *poster_names[] = {"class0", "class1", "class2", "class3", "class4", "class5", "class6", "class7", "class8", "class9", "class10", "class11", "class12", "class13", "class14", "class15", "class16", "class17", "class18", "class19", "class20", "class21", "class22", "class23", "class24", "class25", "class26", "class27", "class28", "class29"};
+image poster_labels[30];
 /*==================================== Helper methods =====================================*/
 
 void convert_poster_detections(float *predictions, int classes, int num, int square, int side, int w, int h, float thresh, float **probs, box *boxes, int only_objectness)
@@ -60,12 +65,11 @@ int updateCorrect(int num, float thresh, float **probs, int classes, char * path
 		int truthClass = get_poster_class(path); // in utils.c
 	
 		// Print and update
+		printf("==] THANH: image %s\n", path);
+		printf("1st poster: %d - %.0f%%,    2nd poster: %d - %.0f%%\n",  max_class, max_prob*100,max_class2, max_prob2*100);
+		
 		if (max_class == truthClass){ correct++; }
-		else{
-			printf("==] THANH: image %s\n", path);
-			printf("1st poster: %d - %.0f%%\n",  max_class, max_prob*100);
-			printf("2nd poster: %d - %.0f%%\n",  max_class2, max_prob2*100);
-		}
+		else{printf("====================================================== WRONG \n");}
 		return correct;
 }
 
@@ -143,8 +147,27 @@ void train_poster(char *cfgfile, char *weightfile, char *train_images, char *bac
 }
 
 
-void validate_poster(char *cfgfile, char *weightfile, char * testImgs)
+void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savingImg)
 {
+		char results[255];
+		if(savingImg != 0){
+			char * path = testImgs;
+			char d = 0;
+			char i;
+			for(i=0; path[i]!='\0'; ++i){
+				if(path[i]=='/'){ d = i; }
+			}
+			int length = d + 1;
+			char folder[length+1];
+			memcpy(folder, path, length);
+			folder[length] = '\0';
+			char * testFolder = folder;
+			
+			// create folder "./results/" to store output images
+			sprintf(results,"%sresults/",testFolder);
+			mkdir(results,0777);
+		}
+		
     network net = parse_network_cfg(cfgfile);
     if(weightfile){
         load_weights(&net, weightfile);
@@ -171,7 +194,7 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs)
     int i=0;
     int t;
 
-    float thresh = .001;
+    float thresh = .1;
     int nms = 1;
     float iou_thresh = .5;
 
@@ -217,11 +240,41 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs)
             float *predictions = network_predict(net, X);
             int w = val[t].w;
             int h = val[t].h;
-            convert_poster_detections(predictions, classes, l.n, square, side, w, h, thresh, probs, boxes, 0);
+//             convert_poster_detections(predictions, classes, l.n, square, side, w, h, thresh, probs, boxes, 0);
+						convert_poster_detections(predictions, classes, l.n, square, side, 1, 1, thresh, probs, boxes, 0);
             if (nms) do_nms_sort(boxes, probs, side*side*l.n, classes, iou_thresh);
 
-            // Calculate the accuracy of classification using hardcored format of the path
-            correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct);
+						if(savingImg == 0){
+							// Calculate the accuracy of classification using hardcored format of the path
+            	correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct);
+						} 
+						else {
+							char * imgName = get_file_name(path);
+							char * classIdx = strtok(strdup(imgName),"_"); // split a copy of "imgName"
+							
+							// create folder "results/classIdx/" to store images of same class
+							char classFolder[256]; // don't use char * to avoid segmentation fault
+							sprintf(classFolder,"%s%s/",results,classIdx);
+							mkdir(classFolder,0777);
+							
+							int lastCorrect = correct;
+							// Calculate the accuracy of classification using hardcored format of the path
+							correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct);
+							if (correct > lastCorrect){ // if correct, assign folder "1"
+								sprintf(classFolder,"%s%s/",classFolder,"1");
+							} else { // if not, assign folder "0"
+								sprintf(classFolder,"%s%s/",classFolder,"0");
+							}
+							mkdir(classFolder,0777);
+							image im = load_image_color(path,0,0);
+// 							draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, poster_labels, classes);
+							draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, 0, classes);
+								
+							char imgToSave[256];
+							sprintf(imgToSave, "%s%s", classFolder, get_file_name(path));
+								
+							save_image(im, imgToSave);
+						}
             total++;
             printf("Current detection accuracy: %.02f%%\n", correct*100.0/total);	
 
@@ -271,16 +324,20 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs)
 //         convert_poster_detections(predictions, l.classes, l.n, l.sqrt, l.side, 1, 1, thresh, probs, boxes, 0);
       
 //         if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms);
-// //         draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, voc_labels, l.classes);
-//         save_image(im, "predictions");
-//         show_image(im, "predictions");
+// //         draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, poster_labels, l.classes);
+//         draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, 0, l.classes);
+// 				char out[256];
+// 				char * outpath = "/home/vut/PosterRecognition/DeepNet/database/realworld/set2/test/real_images/%s";
+// 				sprintf(out, outpath, get_file_name(filename));
+//         save_image(im, out);
+// //         show_image(im, "predictions");
 
-//         show_image(sized, "resized");
+// //         show_image(sized, "resized");
 //         free_image(im);
 //         free_image(sized);
 // #ifdef OPENCV
-//         cvWaitKey(0);
-//         cvDestroyAllWindows();
+// //         cvWaitKey(0);
+// //         cvDestroyAllWindows();
 // #endif
 //         if (filename) break;
 //     }
@@ -289,17 +346,22 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs)
 
 void run_poster_detect(int argc, char **argv)
 {
-//     float thresh = find_float_arg(argc, argv, "-thresh", .2);
+    float thresh = find_float_arg(argc, argv, "-thresh", .2);
+    int savingImg = find_int_arg(argc, argv, "-saveImg", 0);
     if(argc < 4){
         fprintf(stderr, "usage: ./darknet poster_detect [train/test/valid] [cfg] [weights (optional)]\n");
         return;
     }
 
-    char *cfg = argv[3];
-    char *weights = (argc > 4) ? argv[4] : 0;
-    char *filename = (argc > 5) ? argv[5]: 0;
-    char *backup = (argc > 6) ? argv[6]: 0;
-    if(0==strcmp(argv[2], "train")) train_poster(cfg, weights, filename, backup);
-    else if(0==strcmp(argv[2], "valid")) validate_poster(cfg, weights, filename);
+		char *cfg = argv[3];
+		char *weights = (argc > 4) ? argv[4] : 0;
+		char *filename = (argc > 5) ? argv[5]: 0;
+    if(0==strcmp(argv[2], "train")){
+			filename = (argc > 4) ? argv[4]: 0;
+			char *backup = (argc > 5) ? argv[5]: 0;
+			weights = (argc > 6) ? argv[6] : 0;
+			train_poster(cfg, weights, filename, backup);
+		}
+    else if(0==strcmp(argv[2], "valid")) validate_poster(cfg, weights, filename, savingImg);
 //     else if(0==strcmp(argv[2], "test")) test_poster(cfg, weights, filename, thresh);
 }
