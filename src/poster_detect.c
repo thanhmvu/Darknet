@@ -241,6 +241,7 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
             int w = val[t].w;
             int h = val[t].h;
 //             convert_poster_detections(predictions, classes, l.n, square, side, w, h, thresh, probs, boxes, 0);
+						// Fixed a bug here by changing w and h to 1, 1 (similar to the test_poster method)
 						convert_poster_detections(predictions, classes, l.n, square, side, 1, 1, thresh, probs, boxes, 0);
             if (nms) do_nms_sort(boxes, probs, side*side*l.n, classes, iou_thresh);
 
@@ -268,6 +269,7 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
 							mkdir(classFolder,0777);
 							image im = load_image_color(path,0,0);
 // 							draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, poster_labels, classes);
+							// fixed a crash here by removing poster_labels
 							draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, 0, classes);
 								
 							char imgToSave[256];
