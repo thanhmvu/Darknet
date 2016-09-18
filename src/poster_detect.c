@@ -290,60 +290,60 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
 }
 
 
-// void test_poster(char *cfgfile, char *weightfile, char *filename, float thresh)
-// {
-//     network net = parse_network_cfg(cfgfile);
-//     if(weightfile){
-//         load_weights(&net, weightfile);
-//     }
-//     detection_layer l = net.layers[net.n-1];
-//     set_batch_network(&net, 1);
-//     srand(2222222);
-//     clock_t time;
-//     char buff[256];
-//     char *input = buff;
-//     int j;
-//     float nms=.5;
-//     box *boxes = calloc(l.side*l.side*l.n, sizeof(box));
-//     float **probs = calloc(l.side*l.side*l.n, sizeof(float *));
-//     for(j = 0; j < l.side*l.side*l.n; ++j) probs[j] = calloc(l.classes, sizeof(float *));
-//     while(1){
-//         if(filename){
-//             strncpy(input, filename, 256);
-//         } else {
-//             printf("Enter Image Path: ");
-//             fflush(stdout);
-//             input = fgets(input, 256, stdin);
-//             if(!input) return;
-//             strtok(input, "\n");
-//         }
-//         image im = load_image_color(input,0,0);
-//         image sized = resize_image(im, net.w, net.h);
-//         float *X = sized.data;
-//         time=clock();
-//         float *predictions = network_predict(net, X);
-//         printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
-//         convert_poster_detections(predictions, l.classes, l.n, l.sqrt, l.side, 1, 1, thresh, probs, boxes, 0);
+void test_poster(char *cfgfile, char *weightfile, char *filename, float thresh)
+{
+    network net = parse_network_cfg(cfgfile);
+    if(weightfile){
+        load_weights(&net, weightfile);
+    }
+    detection_layer l = net.layers[net.n-1];
+    set_batch_network(&net, 1);
+    srand(2222222);
+    clock_t time;
+    char buff[256];
+    char *input = buff;
+    int j;
+    float nms=.5;
+    box *boxes = calloc(l.side*l.side*l.n, sizeof(box));
+    float **probs = calloc(l.side*l.side*l.n, sizeof(float *));
+    for(j = 0; j < l.side*l.side*l.n; ++j) probs[j] = calloc(l.classes, sizeof(float *));
+    while(1){
+        if(filename){
+            strncpy(input, filename, 256);
+        } else {
+            printf("Enter Image Path: ");
+            fflush(stdout);
+            input = fgets(input, 256, stdin);
+            if(!input) return;
+            strtok(input, "\n");
+        }
+        image im = load_image_color(input,0,0);
+        image sized = resize_image(im, net.w, net.h);
+        float *X = sized.data;
+        time=clock();
+        float *predictions = network_predict(net, X);
+        printf("%s: Predicted in %f seconds.\n", input, sec(clock()-time));
+        convert_poster_detections(predictions, l.classes, l.n, l.sqrt, l.side, 1, 1, thresh, probs, boxes, 0);
       
-//         if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms);
-// //         draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, poster_labels, l.classes);
-//         draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, 0, l.classes);
-// 				char out[256];
-// 				char * outpath = "/home/vut/PosterRecognition/DeepNet/database/realworld/set2/test/real_images/%s";
-// 				sprintf(out, outpath, get_file_name(filename));
-//         save_image(im, out);
-// //         show_image(im, "predictions");
+        if (nms) do_nms_sort(boxes, probs, l.side*l.side*l.n, l.classes, nms);
+//         draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, poster_labels, l.classes);
+        draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, 0, l.classes);
+				char out[256];
+				char * outpath = "/home/vut/PosterRecognition/DeepNet/database/realworld/set2/test/real_images/%s";
+				sprintf(out, outpath, get_file_name(filename));
+        save_image(im, out);
+//         show_image(im, "predictions");
 
-// //         show_image(sized, "resized");
-//         free_image(im);
-//         free_image(sized);
-// #ifdef OPENCV
-// //         cvWaitKey(0);
-// //         cvDestroyAllWindows();
-// #endif
-//         if (filename) break;
-//     }
-// }
+//         show_image(sized, "resized");
+        free_image(im);
+        free_image(sized);
+#ifdef OPENCV
+//         cvWaitKey(0);
+//         cvDestroyAllWindows();
+#endif
+        if (filename) break;
+    }
+}
 
 
 void run_poster_detect(int argc, char **argv)
@@ -365,5 +365,5 @@ void run_poster_detect(int argc, char **argv)
 			train_poster(cfg, weights, filename, backup);
 		}
     else if(0==strcmp(argv[2], "valid")) validate_poster(cfg, weights, filename, savingImg);
-//     else if(0==strcmp(argv[2], "test")) test_poster(cfg, weights, filename, thresh);
+    else if(0==strcmp(argv[2], "test")) test_poster(cfg, weights, filename, thresh);
 }

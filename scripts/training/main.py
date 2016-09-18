@@ -81,7 +81,7 @@ if not os.path.exists(CFG.BACKUP+'detect_weights/'): os.mkdir(CFG.BACKUP+'detect
 # Loop through all ground images
 for objIdx in range (0, CFG.CLASSES):
 	# read an image from the source folder
-	path_in = CFG.SRC_DIR + CFG.LABELS[objIdx] + '.jpg'
+	path_in = CFG.SRC_DIR + `CFG.LABELS[objIdx]`.zfill(6) + '.jpg'
 	img = cv2.imread(path_in)
 	
 	if img is None: 
@@ -102,7 +102,7 @@ print CFG.LABELS
 
 # create file for darknet's input
 def getImgDir():
-  f = open(CFG.DST_DIR + CFG.TASK +'2.txt','w')
+  f = open(CFG.DST_DIR + CFG.TASK +'.txt','w')
   for img in sorted(glob.glob(CFG.IMAGE_DIR+"*")):
     f.write(os.path.realpath(img) + '\n')
   f.close()
