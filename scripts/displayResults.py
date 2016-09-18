@@ -1,5 +1,8 @@
 import glob
 
+train_path = "./src/";
+result_path = "./results/";
+
 def css():
 	f = open("style.css","w")
 	contents = """
@@ -70,9 +73,13 @@ def display(resultDir,trainDir):
 			<th>"""+ classIdx +"""</th>
 			<th>"""+ `len(correctImgs)` +"""</th>
 			<th>"""+ htmlImg(trainImg,"transparent") +"""</th>
-			<th>"""+ " ".join([imgIdx(img) +htmlImg(img,"blue") for img in correctImgs]) +" "+ " ".join([imgIdx(img) +htmlImg(img,"red") for img in incorrectImgs]) +"""</th>
-		</tr>
 		"""
+		for img in correctImgs:
+			resultTable += "<th>" +htmlImg(img,"blue") +"<br>"+ imgIdx(img) +"</th>"
+		for img in incorrectImgs:
+			resultTable += "<th>" +htmlImg(img,"red") +"<br>"+ imgIdx(img) +"</th>"
+		resultTable += "</tr>"
+		
 		totalCorrectImgs += len(correctImgs)
 		totalIncorrectImgs += len(incorrectImgs)
 
@@ -86,6 +93,6 @@ def display(resultDir,trainDir):
 
 
 # ============================== Main ==============================
-display("./results/","../../src/")
+display(result_path,train_path)
 
 
