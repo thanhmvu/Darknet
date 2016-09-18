@@ -57,6 +57,7 @@ char *find_char_arg(int argc, char **argv, char *arg, char *def);
 int sample_array(float *a, int n);
 int get_poster_class(char * path);
 char * get_file_name(char * path);
+char * get_image_name(char * path);
 
 #endif
 

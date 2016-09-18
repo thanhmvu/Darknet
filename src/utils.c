@@ -621,3 +621,16 @@ char * get_file_name(char * path){
   return name;
 }
 
+char * get_image_name(char * path){
+	char* copy = malloc (1 + strlen(path));
+	strcpy(copy,path);
+	char* dim = "/."; // divide string by "/","."
+	char* iterator = strtok(copy,dim);
+	char* name = "-1";
+	while(strcmp(iterator,"jpg") != 0){
+	    name = iterator;
+	    iterator = strtok(NULL,dim);
+	}
+  return name;
+}
+
