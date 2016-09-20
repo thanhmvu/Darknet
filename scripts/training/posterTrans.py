@@ -50,7 +50,7 @@ def lighting(img, title):
 		for i, [l,a,b] in enumerate(row):
 			tmp = int(l*brightness)
 			l = tmp if tmp < 255 else 255
-			ltImg[j][i] = [l,a,b]
+			ltImg[j][i][0] = l
 	
 	ltImg = cv2.cvtColor(ltImg,cv2.COLOR_LAB2RGB)
 
