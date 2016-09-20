@@ -58,6 +58,7 @@ int sample_array(float *a, int n);
 int get_poster_class(char * path);
 char * get_file_name(char * path);
 char * get_image_name(char * path);
+char * get_second_last(char * path, char * dim);
 
 #endif
 

@@ -634,3 +634,19 @@ char * get_image_name(char * path){
   return name;
 }
 
+char * get_second_last(char * path, char * dim){
+	char* copy = malloc (1 + strlen(path));
+	strcpy(copy,path);
+	char* iterator = strtok(copy,dim);
+	char* name = "-1";
+  char* buff = "-1"; 
+	while(iterator != NULL){
+	    name = buff;
+	    buff = iterator;
+	    iterator = strtok(NULL,dim);
+	}
+// 	printf("Loaded %s, class %d\n",path,atoi(class));
+  return name;
+}
+
+
