@@ -46,7 +46,7 @@ void convert_poster_detections(float *predictions, int classes, int num, int squ
     }
 }
 
-int updateCorrect(int num, float thresh, float **probs, int classes, char * path, int correct){
+int updateCorrect(int num, float thresh, float **probs, int classes, char * path, int correct, int *arr){
 		float max_prob = 0; float max_prob2 = 0;
 		int max_class = -1; int max_class2 = -1;
 		int j;
@@ -67,6 +67,10 @@ int updateCorrect(int num, float thresh, float **probs, int classes, char * path
 		// Print and update
 		printf("==] THANH: image %s\n", path);
 		printf("1st poster: %d - %.0f%%,    2nd poster: %d - %.0f%%\n",  max_class, max_prob*100,max_class2, max_prob2*100);
+		arr[0] = max_class;
+		arr[1] = max_prob*100;
+		arr[2] = max_class2;
+		arr[3] = max_prob2*100;
 		
 		if (max_class == truthClass){ correct++; }
 		else{printf("====================================================== WRONG \n");}
@@ -151,7 +155,7 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
 {
 		char results[255];
 		if(savingImg != 0){
-			char * path = testImgs;
+			char * path = cfgfile;
 			char d = 0;
 			char i;
 			for(i=0; path[i]!='\0'; ++i){
@@ -246,8 +250,9 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
             if (nms) do_nms_sort(boxes, probs, side*side*l.n, classes, iou_thresh);
 
 						if(savingImg == 0){
+							int arr[4]; // array to store [best_match, best_prob, 2ndB_match, 2ndB_prob]
 							// Calculate the accuracy of classification using hardcored format of the path
-            	correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct);
+            	correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct, arr);
 						} 
 						else {
 							char * imgName = get_file_name(path);
@@ -260,7 +265,8 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
 							
 							int lastCorrect = correct;
 							// Calculate the accuracy of classification using hardcored format of the path
-							correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct);
+							int arr[4]; // array to store [best_match, best_prob, 2ndB_match, 2ndB_prob]
+							correct = updateCorrect(side *side *l.n, thresh, probs, classes,path, correct, arr);
 							if (correct > lastCorrect){ // if correct, assign folder "1"
 								sprintf(classFolder,"%s%s/",classFolder,"1");
 							} else { // if not, assign folder "0"
@@ -273,7 +279,8 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
 							draw_detections(im, l.side*l.side*l.n, thresh, boxes, probs, poster_names, 0, classes);
 								
 							char imgToSave[256];
-							sprintf(imgToSave, "%s%s", classFolder, get_file_name(path));
+							sprintf(imgToSave, "%s%s_%d_%d_%d_%d.jpg", classFolder, get_image_name(path), 
+											arr[0], arr[1], arr[2], arr[3]);
 								
 							save_image(im, imgToSave);
 						}
