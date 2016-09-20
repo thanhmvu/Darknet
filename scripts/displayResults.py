@@ -2,6 +2,8 @@ import glob
 
 train_path = "./src/";
 result_path = "./results/";
+h = 100;
+b = 1;
 
 def css():
 	f = open("style.css","w")
@@ -18,6 +20,7 @@ def css():
 	    border: 1px solid #dddddd;
 	    text-align: left;
 	    padding: 8px;
+	    font-size: 100%;
 	}
 
 	tr:nth-child(even) {
@@ -44,7 +47,7 @@ def html(contents):
 	f.write(display)
 
 def htmlImg(img, borderColor):
-	return "<img src=\""+ img + "\" alt=\"Class " + img + "\" style=\"height:200px; border:3px solid "+ borderColor +";\">"
+	return "<img src=\""+ img + "\" alt=\"Class " + img + "\" style=\"height:"+`h`+"px; border:"+`b`+"px solid "+ borderColor +";\">"
 
 def imgIdx(img):
 	return img.split("/")[-1].split(".")[0]
@@ -53,10 +56,10 @@ def display(resultDir,trainDir):
 	resultTable = """
 	<table>
 	  <tr>
-	    <th>Class Index</th>
-	    <th>Correct Images</th>
-	    <th>Training Image</th>
-	    <th>Test Images</th>
+	    <th>Class Idx</th>
+	    <th>Correct</th>
+	    <th>Train Img</th>
+	    <th>Test Img</th>
 	  </tr>
 	"""
 
