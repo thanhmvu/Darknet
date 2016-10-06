@@ -7,6 +7,7 @@ import config as CFG
 import utils
 import posterTrans as pTr
 
+import datetime
 """ ============================================================================================================
 This script generates a set of images for training darknet from the ground database of 400 posters.
 For each transformation methods, keep in mind that the deep net should use the title of the posters to recognize the whole poster.
@@ -71,6 +72,8 @@ def saveData(trainData, imgIdx, objIdx):
 		
 """ ======================================== Begining of main code ======================================== """
 
+start = datetime.datetime.now()
+
 if not os.path.exists(CFG.DST_DIR): os.mkdir(CFG.DST_DIR)
 if not os.path.exists(CFG.IMAGE_DIR): os.mkdir(CFG.IMAGE_DIR)
 if not os.path.exists(CFG.LABEL_DIR): os.mkdir(CFG.LABEL_DIR)
@@ -110,3 +113,9 @@ def getImgDir():
 
 getImgDir()
 print "Done!"
+
+
+end = datetime.datetime.now()
+runtime = end - start
+print "Minutes, seconds: ", divmod(runtime.days * 86400 + runtime.seconds, 60)
+print "Total seconds: ", (runtime).seconds
