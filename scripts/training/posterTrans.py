@@ -91,10 +91,10 @@ def randViewpoint(C,w,h):
 	""" Method that generates a point for the perpsective plane (the normal of this plane would be toward the center C of the poster)
 	The point is generates randomly within a hardcoded range, relative to C,w,h. The range is illustrated below.
 	
-			      |_poster_|           .      a = 45 degree
+			      |_poster_|           .      a = 60 degree
 			    / |        | \         |      zRange = (zC + R/2) +-  R/2
 			  / a |        | a \       | R    xRange =     xC     -+ (w/2 + R.sin(a))
-			/     |        |     \     |      yRange = (yC - h/2) +-  h/2
+			/     |        |     \     |      yRange = (yC - h) to (yC + h/4)
 			\_____|________|_____/     |	
 			       --------
 			          w
@@ -107,11 +107,11 @@ def randViewpoint(C,w,h):
 	"""
 	(xC,yC,zC) = C # poster's center
 	unit = 1 # estimated to be roughly equivalent to 1/2 -> 1 inch in real world unit
-	R = random.randrange(int(w*0.25), int(w*0.75), unit)
+	R = random.randrange(w/4, w, unit) # the distance that people stand away from the poster
 	
 	# Generate x
-	xStart = xC - w/2 - R/math.sqrt(2)
-	xEnd = xC + w/2 + R/math.sqrt(2)
+	xStart = xC - w/2 - R/2
+	xEnd = xC + w/2 + R/2
 	x = random.randrange(int(xStart), int(xEnd), unit)
 	
 	# Generate z
@@ -119,7 +119,7 @@ def randViewpoint(C,w,h):
 	z = int(zC + R) if dx < 0 else int(zC + math.sqrt(R*R - dx*dx)) 	
 	
 	# Generate y
-	y = random.randrange(int(yC-h/2), int(yC), unit)
+	y = random.randrange(int(yC-h), int(yC+h/4), unit)
 	
 	return (x,y,z)
 
@@ -159,12 +159,13 @@ def perspective (img, title):
 	h,w = img.shape[:2]
 	[pt1,pt2,pt3,p4] = title
 	C = [w*0.5, h*0.5, 0.0] # poster's center
+	aimPt = [w*0.5, h*0.2, 0.0] # the point at which the camera aims at
 
 	# Generate image plane 
 	P = randViewpoint(C,w,h) # plane origin
-	normal = np.subtract(C,P) # plane normal
+	normal = np.subtract(aimPt,P) # plane normal
 	# Hardcoded viewpoint
-	r = random.randint(75,125)*0.01
+	r = random.randint(50,150)*0.01
 	V = np.subtract(P, normal*r)
 	
 	M1 = iTr.projection_matrix(P, normal, None, V) # 4x4 matrix
@@ -218,8 +219,8 @@ def rotate(img, title):
 	@return (imgT,title) - the transformed image and coordinates of the title' corners
 	
 	"""
-	angle = random.randint(-30,30)
-	buff = random.choice([0,0,0,90,180,270]) # in case the user rotate the image
+	angle = random.randint(-45,45)
+	buff = random.choice([0,90,180,270]) # in case the user rotate the image
 	angle += buff
 	h,w = img.shape[:2]
 	poster = [(0,0), (w-1,0), (w-1,h-1), (0,h-1)] # 4 corners
@@ -300,7 +301,7 @@ def blur(img, title):
 	@return (imgT,title) - the transformed image and coordinates of the title' corners
 	
 	"""
-	dx = random.randint(1,5)
-	dy = random.randint(1,5)
+	dx = random.randint(1,3)
+	dy = random.randint(1,3)
 	img = cv2.blur(img,(dx,dy))
 	return (img,title)
