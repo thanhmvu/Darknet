@@ -1,3 +1,9 @@
+[on-going research]
+
+Using deep neural network (Darknet YOLO) for academic poster recognition.
+Lafayette EXCEL research with Dr. Amir Sadovnik.
+
+
 ![Darknet Logo](http://pjreddie.com/media/files/darknet-black-small.png)
 
 #Darknet#
