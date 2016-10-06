@@ -66,11 +66,11 @@ def display(resultDir,trainDir):
 	totalCorrectImgs = 0
 	totalIncorrectImgs = 0
 
-	for folder in glob.glob(resultDir + "*"):
+	for folder in sorted(glob.glob(resultDir + "*")):
 		classIdx = folder.split("/")[-1]
 		trainImg = trainDir + classIdx + ".jpg";
-		correctImgs = glob.glob(folder + "/1/*");
-		incorrectImgs = glob.glob(folder + "/0/*");
+		correctImgs = sorted(glob.glob(folder + "/1/*"));
+		incorrectImgs = sorted(glob.glob(folder + "/0/*"));
 		resultTable += """
 		<tr>
 			<th>"""+ classIdx +"""</th>
