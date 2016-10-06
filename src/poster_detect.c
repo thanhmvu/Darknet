@@ -9,6 +9,8 @@
 
 #include <sys/stat.h>
 #include <stdio.h>
+#include <stdlib.h>
+
 
 #ifdef OPENCV
 #include "opencv2/highgui/highgui_c.h"
@@ -77,12 +79,29 @@ int updateCorrect(int num, float thresh, float **probs, int classes, char * path
 		return correct;
 }
 
-
+char * getFolder(char * path){
+	char d = 0;
+	char i;
+	for(i=0; path[i]!='\0'; ++i){
+		if(path[i]=='/'){ d = i; }
+	}
+	int length = d + 1;
+	char * folder = malloc(length);
+	memcpy(folder, path, length);
+	folder[length] = '\0';
+	return folder;
+}
 
 /*==================================== Main methods =====================================*/
 
 void train_poster(char *cfgfile, char *weightfile, char *train_images, char *backup_directory)
 {
+	
+		// create trainData.txt
+		char dataFile[255];
+		sprintf(dataFile,"%s/trainData.txt",getFolder(cfgfile));
+		FILE * file = fopen(dataFile, "w+");
+	
     srand(time(0));
     data_seed = time(0);
     char *base = basecfg(cfgfile);
@@ -93,6 +112,7 @@ void train_poster(char *cfgfile, char *weightfile, char *train_images, char *bac
         load_weights(&net, weightfile);
     }
     printf("Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
+		fprintf(file, "Learning Rate: %g, Momentum: %g, Decay: %g\n", net.learning_rate, net.momentum, net.decay);
     int imgs = net.batch*net.subdivisions;
     int i = *net.seen/imgs;
     data train, buffer;
@@ -138,6 +158,10 @@ void train_poster(char *cfgfile, char *weightfile, char *train_images, char *bac
         avg_loss = avg_loss*.9 + loss*.1;
 
         printf("%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+				fprintf(file, "%d: %f, %f avg, %f rate, %lf seconds, %d images\n", i, loss, avg_loss, get_current_rate(net), sec(clock()-time), i*imgs);
+        if(i%1000==0 || (i < 1000 && i%100 == 0)){
+						fflush(file);
+				}
         if(i%1000==0 || (i < 1000 && i%100 == 0)){
             char buff[256];
             sprintf(buff, "%s/%s_%d.weights", backup_directory, base, i);
@@ -148,27 +172,15 @@ void train_poster(char *cfgfile, char *weightfile, char *train_images, char *bac
     char buff[256];
     sprintf(buff, "%s/%s_final.weights", backup_directory, base);
     save_weights(net, buff);
+		fclose(file);
 }
-
 
 void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savingImg)
 {
 		char results[255];
 		if(savingImg != 0){
-			char * path = cfgfile;
-			char d = 0;
-			char i;
-			for(i=0; path[i]!='\0'; ++i){
-				if(path[i]=='/'){ d = i; }
-			}
-			int length = d + 1;
-			char folder[length+1];
-			memcpy(folder, path, length);
-			folder[length] = '\0';
-			char * testFolder = folder;
-			
-			// create folder "./results/" to store output images
-			sprintf(results,"%sresults/",testFolder);
+			// create folder "results/" in test folder to store output images
+			sprintf(results,"%sresults/",getFolder(cfgfile));
 			mkdir(results,0777);
 		}
 		
@@ -281,7 +293,9 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
 							char imgToSave[256];
 							sprintf(imgToSave, "%s%s_%d_%d_%d_%d.jpg", classFolder, get_image_name(path), 
 											arr[0], arr[1], arr[2], arr[3]);
-								
+							
+							int h = 500;
+							im = resize_image(im,h*im.w/im.h,h);
 							save_image(im, imgToSave);
 						}
             total++;
