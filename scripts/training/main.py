@@ -23,6 +23,14 @@ Where x, y, width, and height are relative to the image's width and height, with
 
 
 def transform(img):
+# 	# [TITLE ONLY]
+#   # standardize the size of imput image. extract ONLY the title of the poster.
+# 	h,w = img.shape[:2]
+# 	imgT = img[:h/5,:] # crop out the title
+# 	imgT = utils.resize(imgT, CFG.STD_SIZE)
+# 	h,w = imgT.shape[:2]
+# 	title = [(0,0), (w-1,0), (w-1,h-1), (0,h-1)] # coords of the title is that of the img itself
+	
   # standardize the size of imput image
 	imgT = utils.resize(img, CFG.STD_SIZE)
 	imgT = pTr.addOcclusions(imgT)
@@ -30,11 +38,11 @@ def transform(img):
 	r = CFG.TITLE_RATIO
 	title = [(0,0), (w-1,0), (w-1,int(h*r)), (0,int(h*r))]
 	
+	imgT, title = pTr.lightBlob(imgT, title)
+	imgT, title = pTr.blur(imgT, title)
 	imgT, title = pTr.scaleAndTranslate(imgT,title)
 	imgT, title = pTr.perspective(imgT, title)
 	imgT, title = pTr.rotate(imgT,title)
-	imgT, title = pTr.blur(imgT, title)
-	imgT, title = pTr.lighting(imgT, title)
 	
 	titleArea = utils.boundingArea(title)
 	tBox = utils.formatLabel(titleArea, imgT.shape[:2])

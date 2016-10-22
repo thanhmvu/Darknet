@@ -40,8 +40,17 @@ def addOcclusions(img):
 
 
 """ ========================================== Lighting ========================================= """
-def lighting(img, title):
-	brightness = random.randint(2,19)*0.1
+
+def lightBlob(img, title):
+	numBlobs = random.randint(0,4);
+	lbImg = img
+	for i in range(numBlobs):
+		lbImg = addLightBlob(lbImg)	
+	return (lbImg,title)
+	
+	
+def imageLighting(img, title):
+	brightness = random.randint(5,13)*0.1
 	
 	ltImg = cv2.cvtColor(img,cv2.COLOR_RGB2LAB)
 	
@@ -53,9 +62,46 @@ def lighting(img, title):
 			ltImg[j][i][0] = l
 	
 	ltImg = cv2.cvtColor(ltImg,cv2.COLOR_LAB2RGB)
-
 	return (ltImg,title)
 
+
+def normpdf(x, mean, sd):
+	var = float(sd)**2
+	denom = (2*math.pi*var)**.5
+	num = math.exp(-(float(x)-float(mean))**2/(2*var))
+	return num/denom
+	
+	
+def addLightBlob(img):
+	h,w = img.shape[:2]
+	titleH, titleW = int(h*CFG.TITLE_RATIO), w
+
+	xCenter = random.randint(0,titleW)
+	yCenter = random.randint(0,titleH)
+	R = random.randint(titleH/2,titleH*2)
+	brightness = random.randint(0,11)*0.1
+
+	mean = 0;
+	sd = R/3;
+	normalizedRatio = 1.0/normpdf(0,mean,sd)
+	
+	# adding the lighting blob by adjusting the brightness
+	ltImg = cv2.cvtColor(img,cv2.COLOR_RGB2LAB)
+	for i in range(-R,R):
+		for j in range(-R,R):
+			x = xCenter + i;
+			y = yCenter + j;
+			r = math.sqrt(i*i + j*j)
+			if( x >= 0 and x < w and y >= 0 and y < h and r <= R):
+			# if( x >= 0 and x < titleW and y >= 0 and y < titleH ):
+				currL = ltImg[y][x][0]
+				newL = currL * (1 + (normpdf(r,mean,sd))*normalizedRatio)
+				newL = newL if newL < 255 else 255
+				# newL = 255
+				ltImg[y][x][0] = newL
+	
+	ltImg = cv2.cvtColor(ltImg,cv2.COLOR_LAB2RGB)
+	return ltImg
 
 """ ======================================== Perspective ======================================== """
 
