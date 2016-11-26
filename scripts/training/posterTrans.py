@@ -314,14 +314,14 @@ def scaleAndTranslate(img, title):
 	"""
 	h1,w1 = img.shape[:2]
 	# Generate n for scaling so that imageSize/ posterSize = n^2
-	n = random.randint(10,20)*0.1 
+	n = random.randint(10,15)*0.1 # ARBITRARILY set scale range 1 - 1.5
 	h2,w2 = (int(h1*n), int(w1*n))
 	
 	# Generate tx,ty for translation
 	x1 = int(-0.2*w1) ; x2 = int(w2 - 0.8*w1)
-	tx = random.randint(x1,x2)
-	y1 = 0 ; y2 = int(h2 - 0.8*h1)
-	ty = random.randint(y1,y2)
+	tx = random.randint(x1,x2) # ARBITRARILY set x-distance
+	y1 = 0 ; y2 = int(h2 - 0.5*h1)
+	ty = random.randint(y1,y2) # ARBITRARILY set y-distance
 	
 	# Transform image and calculate the new title
 	M = np.float32([[1,0,tx],[0,1,ty]])
