@@ -17,8 +17,9 @@
 #endif
 
 
-char *poster_names[] = {"class0", "class1", "class2", "class3", "class4", "class5", "class6", "class7", "class8", "class9", "class10", "class11", "class12", "class13", "class14", "class15", "class16", "class17", "class18", "class19", "class20", "class21", "class22", "class23", "class24", "class25", "class26", "class27", "class28", "class29"};
-image poster_labels[30];
+// char *poster_names[] = {"class0", "class1", "class2", "class3", "class4", "class5", "class6", "class7", "class8", "class9", "class10", "class11", "class12", "class13", "class14", "class15", "class16", "class17", "class18", "class19", "class20", "class21", "class22", "class23", "class24", "class25", "class26", "class27", "class28", "class29"};
+// image poster_labels[30];
+char *poster_names[100];
 /*==================================== Helper methods =====================================*/
 
 void convert_poster_detections(float *predictions, int classes, int num, int square, int side, int w, int h, float thresh, float **probs, box *boxes, int only_objectness)
@@ -96,10 +97,13 @@ char * getFolder(char * path){
 
 void train_poster(char *cfgfile, char *weightfile, char *train_images, char *backup_directory)
 {
-	
+		
 		// create trainData.txt
-		char dataFile[255];
-		sprintf(dataFile,"%s/trainData.txt",getFolder(cfgfile));
+		char dataFile[255];	
+		char t[100];
+		time_t now = time(0);
+		strftime (t, 100, "%Y%m%d-%H%M%S", localtime (&now));
+		sprintf(dataFile,"%s/trainData_%s.txt",getFolder(cfgfile),t);
 		FILE * file = fopen(dataFile, "w+");
 	
     srand(time(0));
@@ -210,9 +214,10 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
     int i=0;
     int t;
 
-    float thresh = .1;
-    int nms = 1;
-    float iou_thresh = .5;
+    float thresh = 0.0;
+		// don't use nms since we only "classifying" posters, not detecting them"
+//     int nms = 1;
+//     float iou_thresh = .5;
 
     int nthreads = 2;
     image *val = calloc(nthreads, sizeof(image));
@@ -259,7 +264,7 @@ void validate_poster(char *cfgfile, char *weightfile, char * testImgs, int savin
 //             convert_poster_detections(predictions, classes, l.n, square, side, w, h, thresh, probs, boxes, 0);
 						// Fixed a bug here by changing w and h to 1, 1 (similar to the test_poster method)
 						convert_poster_detections(predictions, classes, l.n, square, side, 1, 1, thresh, probs, boxes, 0);
-            if (nms) do_nms_sort(boxes, probs, side*side*l.n, classes, iou_thresh);
+//             if (nms) do_nms_sort(boxes, probs, side*side*l.n, classes, iou_thresh);
 
 						if(savingImg == 0){
 							int arr[4]; // array to store [best_match, best_prob, 2ndB_match, 2ndB_prob]
