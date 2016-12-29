@@ -8,6 +8,7 @@ import utils
 import posterTrans as pTr
 
 import datetime
+from shutil import copyfile
 """ ============================================================================================================
 This script generates a set of images for training darknet from the ground database of 400 posters.
 For each transformation methods, keep in mind that the deep net should use the title of the posters to recognize the whole poster.
@@ -88,6 +89,7 @@ if not os.path.exists(CFG.LABEL_DIR): os.mkdir(CFG.LABEL_DIR)
 if not os.path.exists(CFG.BACKUP): os.mkdir(CFG.BACKUP)
 if not os.path.exists(CFG.BACKUP+'classify_weights/'): os.mkdir(CFG.BACKUP+'classify_weights/')
 if not os.path.exists(CFG.BACKUP+'detect_weights/'): os.mkdir(CFG.BACKUP+'detect_weights/')
+if not os.path.exists(CFG.BACKUP+'yolo2_weights/'): os.mkdir(CFG.BACKUP+'yolo2_weights/')
 
 
 # Loop through all ground images
@@ -120,7 +122,45 @@ def getImgDir():
   f.close()
 
 getImgDir()
-print "Done!"
+
+print "Finished generating train data"
+
+
+""" ======================================== Generate test images ======================================== """
+NUM_OF_TEST_IMGS = 5
+src_img_dir = "/home/vut/PosterRecognition/DeepNet/database/realworld/set2/test/real_images/JPEGImages/"
+dst_test_dir = "/home/vut/PosterRecognition/DeepNet/database/realworld/set2/randTest/%dC_%s/" % (CFG.CLASSES, CFG.NOTE)
+
+if not os.path.exists(dst_test_dir): os.makedirs(dst_test_dir)
+dst_img_dir = dst_test_dir+"JPEGImages/"
+if not os.path.exists(dst_img_dir): os.makedirs(dst_img_dir)
+
+file = open(dst_test_dir+"test.txt","w")
+for i,posterIdx in enumerate(CFG.POSTERS):
+	for imgIdx in range(NUM_OF_TEST_IMGS):
+		img_in = src_img_dir+ `posterIdx`.zfill(6)+"_"+ `imgIdx`.zfill(6)+".jpg"
+		img_out = dst_img_dir+ `i`.zfill(6)+"_"+ `imgIdx`.zfill(6)+".jpg"
+		copyfile(img_in, img_out)
+		file.write(img_out+"\n")
+		print "FROM: %s to %s" % (`posterIdx`.zfill(6)+"_"+ `imgIdx`.zfill(6),`i`.zfill(6)+"_"+ `imgIdx`.zfill(6))
+
+print "Finished generating test data"
+
+
+""" ======================================== Prepare to train ======================================== """
+cfgfile_src = "../../../../database/realworld/set2/randTrain/cfg-yolo2/yolo2_%dc.cfg" % (CFG.CLASSES)
+cfgfile_dst = "../../../../database/realworld/set2/randTrain/%dC_%dP_%s/yolo2_%dc.cfg" % (CFG.CLASSES,CFG.NUM_VAR,CFG.NOTE,CFG.CLASSES)
+copyfile(cfgfile_src,cfgfile_dst)
+
+# train_command = "./darknet -i X poster_detect train ../../database/realworld/set2/randTrain/%dC_%dP_%s/poster_detect_%dc.cfg ../../database/realworld/set2/randTrain/%dC_%dP_%s/randTrain.txt ../../database/realworld/set2/randTrain/%dC_%dP_%s/backup/detect_weights ../../database/extraction.conv.weights" % (CFG.CLASSES,CFG.NUM_VAR,CFG.NOTE,CFG.CLASSES,CFG.CLASSES,CFG.NUM_VAR,CFG.NOTE,CFG.CLASSES,CFG.NUM_VAR,CFG.NOTE)
+train_command = "To train: \n=> Adjust params in train_detector method in detector.c;\n=> Run make;\n=> Run command: ./darknet detector train x x x -gpus 0 1 2 3"
+
+# test_command = "./darknet -i X poster_detect valid ../../database/realworld/set2/randTrain/%dC_%dP_%s/poster_detect_%dc.cfg ../../database/realworld/set2/randTrain/%dC_%dP_%s/backup/detect_weights/poster_detect_%dc_%%d.weights ../../database/realworld/set2/randTest/%dC_%s/test.txt -saveImg 0" % (CFG.CLASSES,CFG.NUM_VAR,CFG.NOTE,CFG.CLASSES,CFG.CLASSES,CFG.NUM_VAR,CFG.NOTE,CFG.CLASSES,CFG.CLASSES,CFG.NOTE)
+test_command = "To validate: \n=> Adjust params in multivalid method in detector.c;\n=> Run make;\n=> Run command: ./darknet detector multivalid x x x"
+
+print "\n",train_command, "\n"
+print test_command, "\n"
+
 
 
 end = datetime.datetime.now()
